@@ -9,13 +9,13 @@ export default async function handler(req, res) {
   try {
     await store.init();
     const uid = await userFromReq(req);
-    if (!uid) return res.status(401).json({ error: 'sign in to sync bookmarks' });
+    if (!uid) return res.status(401).json({ error: 'iniciá sesión para sincronizar tus favoritos' });
 
     if (req.method === 'POST') {
       const body = await readBody(req);
       const riotId = String(body.riotId || '').trim().replace(/\s*#\s*/, '#');
       const region = String(body.region || 'euw').replace(/[^a-z]/g, '');
-      if (!riotId.includes('#')) return res.status(400).json({ error: 'riotId must be Name#TAG' });
+      if (!riotId.includes('#')) return res.status(400).json({ error: 'riotId debe tener el formato Nombre#TAG' });
       if (body.op === 'remove') await store.removeBookmark(uid, riotId);
       else await store.addBookmark(uid, riotId, region);
     }

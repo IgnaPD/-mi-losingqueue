@@ -17,13 +17,13 @@ export default async function handler(req, res) {
     const region = String(req.query.region || 'euw').replace(/[^a-z]/g, '');
     userKey = req.headers['x-api-key'];
     const key = userKey || process.env.RIOT_API_KEY;
-    if (!riotId.includes('#')) return res.status(400).json({ error: 'riotId must be Name#TAG' });
-    if (!key) return res.status(400).json({ error: 'no API key available' });
+    if (!riotId.includes('#')) return res.status(400).json({ error: 'riotId debe tener el formato Nombre#TAG' });
+    if (!key) return res.status(400).json({ error: 'no hay clave de API disponible' });
 
     const [name, tag] = riotId.split('#');
     const c = makeClient(key, region);
     const acct = await resolveAccount(c, name, tag);
-    if (!acct) return res.status(404).json({ error: 'account not found' });
+    if (!acct) return res.status(404).json({ error: 'cuenta no encontrada' });
     // Remakes (game ends in the first 5 min, no LP/analysis value) are excluded from the list
     // entirely rather than shown as a dead row — so request a few extra ids up front to backfill
     // whatever remakes eat into the requested count. If even that buffer isn't enough (rare —
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     }
     res.status(200).json({ puuid: acct.puuid, summoner, games: out });
   } catch (e) {
-    res.status(500).json({ error: e.message + (userKey ? ' (your pasted key)' : ' (the shared server key)') });
+    res.status(500).json({ error: e.message + (userKey ? ' (tu clave pegada)' : ' (la clave compartida del servidor)') });
   }
 }
 

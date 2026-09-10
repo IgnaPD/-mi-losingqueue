@@ -24,33 +24,33 @@ const API = import.meta.env.VITE_API_URL || '';
 document.querySelector('#app').innerHTML = `
   <div class="site-header">
     <img class="lol-logo" src="https://upload.wikimedia.org/wikipedia/commons/d/d8/League_of_Legends_2019_vector.svg" alt="League of Legends">
-    <h1><span>Losing Queue</span> <span class="unofficial-badge">Unofficial</span> <span class="h1-right"><a href="/scoring.html" class="algo-link">ⓘ <span class="algo-full">How we score</span><span class="algo-short">Scoring</span></a><span id="clerkBtn"></span></span></h1>
+    <h1><span>Losing Queue</span> <span class="unofficial-badge">No oficial</span> <span class="h1-right"><a href="/scoring.html" class="algo-link">ⓘ <span class="algo-full">Cómo puntuamos</span><span class="algo-short">Puntaje</span></a><span id="clerkBtn"></span></span></h1>
   </div>
-  <div class="sub"><span class="sub-short">Was your game winnable or are you in a losing queue? Ranked Solo/Duo · pre-game form · duo detection · GA scores</span><span class="sub-more"> for all 10 players · proven by shared matches · official Riot API</span></div>
+  <div class="sub"><span class="sub-short">¿Tu partida era ganable o estás en una losing queue? Ranked Solo/Duo · formato pre-partida · detección de dúos · puntajes GA</span><span class="sub-more"> para los 10 jugadores · verificado con partidas compartidas · API oficial de Riot</span></div>
   <form id="f" autocomplete="off" onsubmit="return false">
     <div class="combo">
-      <input id="riotId" name="riot-search" placeholder="Game name #TAG — e.g. xDevilStreet#EUW" required autocomplete="off">
-      <button type="button" id="bmStar" title="Bookmark this profile">☆</button>
-      <button type="button" id="copyProfileLink" title="Copy a shareable link to this profile">🔗</button>
+      <input id="riotId" name="riot-search" placeholder="Nombre de juego #TAG — ej. xDevilStreet#EUW" required autocomplete="off">
+      <button type="button" id="bmStar" title="Guardar este perfil">☆</button>
+      <button type="button" id="copyProfileLink" title="Copiar un link para compartir este perfil">🔗</button>
       <div id="bmDrop"></div>
     </div>
     <select id="games"><option>3</option><option selected>5</option><option>10</option></select>
     <select id="region"><option selected>euw</option><option>eune</option><option>na</option><option>kr</option><option>las</option><option>lan</option></select>
-    <button id="go">Find games</button>
-    <button type="button" id="liveBtn" class="live">🔴 Live game</button>
+    <button id="go">Buscar partidas</button>
+    <button type="button" id="liveBtn" class="live">🔴 Partida en vivo</button>
     <div class="keyrow">
       <div class="keywrap">
-        <input id="apiKey" name="riot-api-key" placeholder="Your Riot API key (optional)" type="text" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>
+        <input id="apiKey" name="riot-api-key" placeholder="Tu clave de Riot API (opcional)" type="text" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>
         <span id="keyValid" title=""></span>
-        <button type="button" id="clearKey" title="Clear saved key">✕</button>
+        <button type="button" id="clearKey" title="Borrar clave guardada">✕</button>
       </div>
       <div class="note">
-        <a href="#" id="howKey">How to get your own free key (2 min) ▾</a>
+        <a href="#" id="howKey">Cómo conseguir tu propia clave gratis (2 min) ▾</a>
         <div id="keyHelp" style="display:none">
-          1. Go to <a href="https://developer.riotgames.com" target="_blank" rel="noreferrer">developer.riotgames.com</a> and sign in with your Riot account.<br>
-          2. Copy the <b>Development API Key</b> on the dashboard and paste it here.<br>
-          3. It expires every 24h (Riot's rule) — just grab a new one. The key stays in your browser and is only used for your own requests.
-          <div>No key? <b>3 free analyses/day</b><span class="note-more"> (may queue). Analyzed games are always free & instant.</span></div>
+          1. Entrá a <a href="https://developer.riotgames.com" target="_blank" rel="noreferrer">developer.riotgames.com</a> e iniciá sesión con tu cuenta de Riot.<br>
+          2. Copiá la <b>Development API Key</b> del panel y pegala acá.<br>
+          3. Vence cada 24h (regla de Riot) — solo hay que generar una nueva. La clave queda en tu navegador y solo se usa para tus propias búsquedas.
+          <div>¿Sin clave? <b>3 análisis gratis/día</b><span class="note-more"> (puede haber espera). Las partidas ya analizadas son siempre gratis e instantáneas.</span></div>
         </div>
       </div>
     </div>
@@ -162,12 +162,12 @@ async function checkKeyValidity(isRetry = false) {
   const el = $('#keyValid');
   const val = $('#apiKey').value.trim();
   if (!looksLikeKey(val)) { el.textContent = ''; el.title = ''; el.className = ''; return; }
-  el.textContent = '…'; el.title = 'Checking…'; el.className = 'checking';
+  el.textContent = '…'; el.title = 'Verificando…'; el.className = 'checking';
   try {
     const r = await fetch(`${API}/api/keycheck`, { headers: { 'x-api-key': val } });
     const data = await r.json();
     if (data.valid) {
-      el.textContent = '✓'; el.title = 'This key is valid'; el.className = 'ok';
+      el.textContent = '✓'; el.title = 'Esta clave es válida'; el.className = 'ok';
       if (statusHasKeyError) { $('#status').textContent = ''; statusHasKeyError = false; }
       // v4.32: a fresh, now-valid key upgrades a standing keylessFallback() list (cached/history
       // games shown after a dead-key search) to the real live one automatically — same
@@ -181,10 +181,10 @@ async function checkKeyValidity(isRetry = false) {
       // state and retry ONCE, ~4s later; only 401/403 (the actual "this key is bad" responses)
       // ever produce ✗. Guard against a stale retry firing after the user has since changed the
       // field, same race-safety pattern as handleKeyError's sentKeyValue check below.
-      el.title = 'Riot is momentarily unavailable — rechecking…';
+      el.title = 'Riot no está disponible en este momento — reintentando…';
       if (!isRetry) setTimeout(() => { if ($('#apiKey').value.trim() === val) checkKeyValidity(true); }, 4000);
     } else {
-      el.textContent = '✗'; el.title = `Riot rejected this key (status ${data.status || '?'}) — it may be expired or mistyped`; el.className = 'bad';
+      el.textContent = '✗'; el.title = `Riot rechazó esta clave (estado ${data.status || '?'}) — puede estar vencida o mal escrita`; el.className = 'bad';
     }
   } catch { el.textContent = ''; el.title = ''; el.className = ''; } // network hiccup — not the key's fault, stay silent
 }
@@ -253,7 +253,7 @@ function winProbHTML(wp) {
     return `<div class="wp-seg wp-seg-${side}" style="width:${pct}%">${inside}</div>`;
   };
   const outside = (pct, side) => pct < WP_NARROW_PCT ? `<span class="wp-label-out wp-label-out-${side}">${pct}%</span>` : '';
-  return `<div class="wp-bar-wrap" title="Estimated pre-game win chance BLUE–RED">
+  return `<div class="wp-bar-wrap" title="Probabilidad estimada de victoria antes de la partida AZUL–ROJO">
     <div class="wp-bar">${seg(wp.blue, 'blue')}${seg(wp.red, 'red')}</div>
     ${outside(wp.blue, 'blue')}${outside(wp.red, 'red')}
   </div>`;
@@ -321,7 +321,7 @@ function handleKeyError(err, sentKeyValue) {
   $('#apiKey').value = '';
   localStorage.removeItem('rgapi');
   $('#keyValid').textContent = ''; $('#keyValid').title = ''; $('#keyValid').className = '';
-  $('#status').textContent = 'Your saved Riot API key was expired and has been removed — paste a fresh one from developer.riotgames.com, or continue keyless (3/day).';
+  $('#status').textContent = 'Tu clave de Riot API guardada venció y fue eliminada — pegá una nueva desde developer.riotgames.com, o seguí sin clave (3/día).';
   statusHasKeyError = true; // cleared by the #apiKey input listener or a fresh ✓ (checkKeyValidity)
   return true;
 }
@@ -347,7 +347,7 @@ const verdictCls = (v, dir) => isFairVerdict(v) ? 'b-ok' : dir === 'favor' ? 'b-
 // the lobby leaned your way. Tooltips/reasons unchanged (verdictTitle below still does the real
 // explaining) — this only touches the three-word label itself. Losing-queue badge logic is keyed
 // on `direction === 'against'`, not this label text, so it's unaffected.
-const verdictLabel = (v, dir) => isFairVerdict(v) ? 'FAIR' : dir === 'favor' ? 'FAVORED' : 'NOT FAIR';
+const verdictLabel = (v, dir) => isFairVerdict(v) ? 'JUSTO' : dir === 'favor' ? 'FAVORECIDO' : 'INJUSTO';
 // tooltip is the engine's verdictTooltip — the actual fired reasons (NOT FAIR) or the offsetting
 // explanation (FAIR-but-imbalanced), terse, straight from lib/riot.mjs. Legacy entries analyzed
 // before that field existed (or that still carry the retired 'mixed' direction) fall back to a
@@ -365,10 +365,10 @@ const scrubLegacy = s => (s || '')
   .replace(/\s{2,}/g, ' ')
   .trim();
 const verdictTitle = (v, dir, tooltip) => {
-  if (dir === 'mixed') return 'Re-analyze for updated verdict';
+  if (dir === 'mixed') return 'Volvé a analizar para un veredicto actualizado';
   if (tooltip) return scrubLegacy(tooltip);
   if (isFairVerdict(v)) return '';
-  return dir === 'against' ? "The lobby was stacked in the enemy team's favor" : dir === 'favor' ? "The lobby was stacked in your team's favor" : 'Re-analyze for updated verdict';
+  return dir === 'against' ? "La partida estuvo desequilibrada a favor del equipo enemigo" : dir === 'favor' ? "La partida estuvo desequilibrada a tu favor" : 'Volvé a analizar para un veredicto actualizado';
 };
 // v4.21: the DRAFT verdict — champ-select quality (counter picks, bot synergy), entirely separate
 // from the matchmaking verdict above. Card-level only (not shown on list rows — those keep just
@@ -388,9 +388,9 @@ const DRAFT_PILL_INLINE_BUDGET = 60;
 // means for their game, or whose "fault" it is (BAD is a drafting mistake by the players, not a
 // Riot matchmaking failure — worth saying explicitly so it doesn't read as another fairness gripe).
 const DRAFT_VERDICT_EXPLAIN = {
-  GOOD: 'Your team gained an edge at champion select (counters/synergy) — before the game even started.',
-  BAD: "Your team lost champion select — picked into counters or a weak duo. This is on the players, not Riot's matchmaking.",
-  EVEN: 'Champion select gave neither team a meaningful edge — the picks roughly cancel out.',
+  GOOD: 'Tu equipo ganó ventaja en la selección de campeones (counters/sinergia) — antes de empezar la partida.',
+  BAD: "Tu equipo perdió la selección de campeones — eligió contra counters o un dúo débil. Esto es responsabilidad de los jugadores, no del matchmaking de Riot.",
+  EVEN: 'La selección de campeones no le dio ventaja real a ningún equipo — las elecciones se compensan entre sí.',
 };
 const draftPillHTML = (draft, components) => {
   // v-resilience: real reproduced crash — a `draft` object present but missing/non-numeric `net`
@@ -496,7 +496,7 @@ $('#bmStar').addEventListener('click', async () => {
   if (!on && !clerk?.user) {
     pendingBookmark = { riotId, region };
     if (clerk) clerk.openSignIn();
-    else $('#status').textContent = 'Sign in to save favorites.';
+    else $('#status').textContent = 'Iniciá sesión para guardar favoritos.';
     return;
   }
   setBM(on ? getBM().filter(b => normRiotId(b.riotId).toLowerCase() !== riotId.toLowerCase()) : [...getBM(), { riotId, region }]);
@@ -538,8 +538,8 @@ async function copyToClipboardOrToast(text, successMsg) {
 function profileLinkFor(riotId) { return `${location.origin}${location.pathname}?riot-search=${encodeURIComponent(riotId)}`; }
 $('#copyProfileLink').addEventListener('click', () => {
   const riotId = normRiotId($('#riotId').value);
-  if (!riotId.includes('#')) { showToast('Search a profile first'); return; }
-  copyToClipboardOrToast(profileLinkFor(riotId), 'Link copied to clipboard');
+  if (!riotId.includes('#')) { showToast('Buscá un perfil primero'); return; }
+  copyToClipboardOrToast(profileLinkFor(riotId), 'Link copiado al portapapeles');
 });
 
 // Keep the lastSearch cache (used to restore the list on page load) in sync with what actually
@@ -627,7 +627,7 @@ function syncLastSearchAnalyzed(riotId, matchId, entry) {
         // one calm line explaining why they're looking at cached games instead of a live list.
         // v4.32: flagged so a freshly typed/pasted key clears it (see the #apiKey input listener)
         // instead of leaving it stuck on screen forever.
-        $('#status').innerHTML = '<span class="dim">Live game list unavailable (no valid key) — showing analyzed games from cache.</span>';
+        $('#status').innerHTML = '<span class="dim">Lista de partidas en vivo no disponible (sin clave válida) — mostrando partidas ya analizadas desde caché.</span>';
         statusHasKeyError = true;
       }
     });
@@ -739,7 +739,7 @@ if (CLERK_PK) {
       }
     } else {
       const btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'mini'; btn.textContent = 'Sign in';
+      btn.type = 'button'; btn.className = 'mini'; btn.textContent = 'Iniciar sesión';
       btn.addEventListener('click', () => clerk.openSignIn());
       el.appendChild(btn);
     }
@@ -824,7 +824,7 @@ async function loadDeepLink(riotId, matchId) {
         verdictTooltip: e.verdictTooltip, oneLiner: e.oneLiner,
       }, ...games];
     }
-    if (!games.length) { $('#status').textContent = "This shared game couldn't be found — it may not be analyzed yet."; return; }
+    if (!games.length) { $('#status').textContent = "No se encontró esta partida compartida — puede que todavía no esté analizada."; return; }
     CTX = { riotId, region };
     localStorage.setItem('riotId', riotId);
     $('#list').innerHTML = '';
@@ -833,7 +833,7 @@ async function loadDeepLink(riotId, matchId) {
     const viewBtn = document.querySelector(`#list .mini[data-mid="${CSS.escape(matchId)}"]:not(.icon-btn)`);
     if (viewBtn) viewBtn.click(); // same code path a manual View click takes — no duplicated render logic
   } catch {
-    $('#status').textContent = 'Could not load the shared game — try refreshing.';
+    $('#status').textContent = 'No se pudo cargar la partida compartida — probá recargar la página.';
   }
 }
 
@@ -854,7 +854,7 @@ async function liveSearch(attempt, headers) {
   // The rows speak for themselves (✓ badges already mark analyzed games) — no instructional
   // sentence needed once there's a list to look at; only the empty-results case still needs a
   // status message, since there's nothing on screen to explain otherwise.
-  $('#status').textContent = data.games.length ? '' : 'No ranked solo games found.';
+  $('#status').textContent = data.games.length ? '' : 'No se encontraron partidas ranked solo.';
   localStorage.setItem('lastSearch', JSON.stringify({ riotId: CTX.riotId, region: CTX.region, games: data.games, ts: Date.now() }));
   loadHistory(0);
 }
@@ -909,7 +909,7 @@ $('#f').addEventListener('submit', async e => {
       // handleKeyError itself covers — this fallback notice is itself always about a dead/missing
       // key regardless of what specifically triggered it, so the input listener's "new key
       // typed, clear the stale message" logic needs to see it too.
-      $('#status').innerHTML = keyNote + '<br><span class="dim">Live game list unavailable (no valid key) — showing analyzed games from cache.</span>';
+      $('#status').innerHTML = keyNote + '<br><span class="dim">Lista de partidas en vivo no disponible (sin clave válida) — mostrando partidas ya analizadas desde caché.</span>';
       statusHasKeyError = true;
     } else if (!handled) {
       $('#status').innerHTML = '❌ ' + esc(err.message);
@@ -950,8 +950,8 @@ async function checkLive(riotId, region, attempt = 0) {
       return checkLive(riotId, region, attempt + 1);
     }
     if (!r.ok) throw new Error(data.error || r.status);
-    if (data.inGame === false) { $('#status').textContent = 'Not in a game right now.'; }
-    else if (data.unsupported) { $('#status').textContent = 'In game, but not Ranked Solo/Duo.'; }
+    if (data.inGame === false) { $('#status').textContent = 'No estás en partida ahora mismo.'; }
+    else if (data.unsupported) { $('#status').textContent = 'Estás en partida, pero no es Ranked Solo/Duo.'; }
     else {
       CTX = { riotId, region };
       syncLastSearchAnalyzed(riotId, data.entry.matchId, data.entry);
@@ -995,7 +995,7 @@ function renderLive(g) {
   card.innerHTML = `
     <div class="row">
       <span class="live-head">
-        <span class="badge b-live">LIVE</span>
+        <span class="badge b-live">EN VIVO</span>
         <span>${esc(g.user?.champ || '')}</span>
         <span class="dim">· ${mins} min</span>
         ${g.recommendation ? '<span class="dim">—</span>' : ''}
@@ -1049,7 +1049,7 @@ function renderLosingBadge(games) {
   const n = losingStreak(games);
   if (n < 3) { el.style.display = 'none'; el.innerHTML = ''; return; }
   const label = n > 3 ? `LOSING QUEUE? ×${n}` : 'LOSING QUEUE?';
-  el.innerHTML = `<span class="badge b-bad" title="Last ${n} analyzed games were all stacked AGAINST this player (regardless of result) — the matchmaker may be pushing them down">${esc(label)}</span>`;
+  el.innerHTML = `<span class="badge b-bad" title="Las últimas ${n} partidas analizadas estuvieron desequilibradas EN CONTRA de este jugador (sin importar el resultado) — el matchmaking podría estar perjudicándolo">${esc(label)}</span>`;
   el.style.display = 'block';
 }
 
@@ -1117,7 +1117,7 @@ function renderRows(games, container, prefix, rid) {
     // the lightweight /api/matches and /api/history payloads on purpose — so this is empty here
     // and only appears once a row has actually been analyzed/viewed (see analyze()'s DOM update).
     const wpCompact = winProbCompact(g.winProb);
-    const oneLinerHTML = oneLiner + (wpCompact ? ` <span class="wp-compact" title="Estimated pre-game win chance BLUE–RED">${esc(wpCompact)}</span>` : '');
+    const oneLinerHTML = oneLiner + (wpCompact ? ` <span class="wp-compact" title="Probabilidad estimada de victoria antes de la partida AZUL–ROJO">${esc(wpCompact)}</span>` : '');
     // A live-snapshot entry (g.live — only ever set on rows coming through /api/history; the
     // search-list path via /api/matches never marks a cached row live, it falls through to the
     // uncached/wasLive branch instead) is still pre-game, not a finished game with an unknown-yet
@@ -1126,7 +1126,7 @@ function renderRows(games, container, prefix, rid) {
     // just a dim placeholder where the result would go, and no fake "0m (in progress)" duration.
     const resultEl = g.live
       ? '<span class="dim">—</span>'
-      : (g.result === 'Live' ? '<span class="badge b-live">LIVE</span>' : `<span class="res-${(g.result || '?')[0]}">${esc(g.result)}</span>`);
+      : (g.result === 'Live' ? '<span class="badge b-live">EN VIVO</span>' : `<span class="res-${(g.result || '?')[0]}">${esc(g.result)}</span>`);
     const dateHTML = g.live ? esc(relativeDate(g.when)) : `${esc(shortDuration(g.duration))} · ${esc(relativeDate(g.when))}`;
     // Result/champ/KDA/badge/date are fixed-width columns (see .col-* in style.css) so every
     // row lines up vertically and none of them ever wraps internally — only the one-liner
@@ -1172,7 +1172,7 @@ function renderRows(games, container, prefix, rid) {
         <span class="col-badge">${badge}</span>
         <span class="col-date dim" title="${esc(absoluteDate(g.when))}">${dateHTML}</span>
         <span class="one-h" id="o${key}" title="${oneLiner}">${oneLinerHTML}</span>
-        <button class="mini${g.wasLive ? ' wasLive-ready' : ''}" id="v${key}" data-mid="${esc(g.matchId)}" data-key="${key}" data-rid="${esc(rid)}"${g.wasLive ? ' data-force="1" title="Your live-reviewed game just ended — click for the final analysis"' : ''}>${g.cached ? '✓ View' : 'Analyze'}</button>
+        <button class="mini${g.wasLive ? ' wasLive-ready' : ''}" id="v${key}" data-mid="${esc(g.matchId)}" data-key="${key}" data-rid="${esc(rid)}"${g.wasLive ? ' data-force="1" title="Your live-reviewed game just ended — click for the final analysis"' : ''}>${g.cached ? '✓ Ver' : 'Analizar'}</button>
         ${reanalyzeBtn}
         ${shareBtn}
       </div>
@@ -1227,7 +1227,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
   // different <button>), so success below updates that one too and a later View click reads
   // correctly.
   const isReanalyze = btn.classList.contains('icon-btn');
-  if (!isReanalyze && btn.dataset.loaded) { card.classList.toggle('open'); btn.textContent = card.classList.contains('open') ? '▴ Hide' : '✓ View'; return; }
+  if (!isReanalyze && btn.dataset.loaded) { card.classList.toggle('open'); btn.textContent = card.classList.contains('open') ? '▴ Ocultar' : '✓ Ver'; return; }
   // The row's own account (set at render time), not CTX — CTX may have moved on since these
   // rows were rendered (a failed later search leaves stale rows on screen without touching CTX).
   const rid = btn.dataset.rid || CTX.riotId;
@@ -1272,7 +1272,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
     if (oneEl) {
       const wpCompact = winProbCompact(g.winProb);
       const cleanOneLiner = scrubLegacy(g.oneLiner);
-      oneEl.innerHTML = esc(cleanOneLiner) + (wpCompact ? ` <span class="wp-compact" title="Estimated pre-game win chance BLUE–RED">${esc(wpCompact)}</span>` : '');
+      oneEl.innerHTML = esc(cleanOneLiner) + (wpCompact ? ` <span class="wp-compact" title="Probabilidad estimada de victoria antes de la partida AZUL–ROJO">${esc(wpCompact)}</span>` : '');
       oneEl.title = cleanOneLiner;
     }
     // Full matchup/details panel — by far the riskiest render here (matchupHTML/detailsHTML pull
@@ -1331,7 +1331,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
           }
           freshCard.classList.add('open');
           freshBtn.dataset.loaded = '1';
-          freshBtn.textContent = '▴ Hide';
+          freshBtn.textContent = '▴ Ocultar';
         }
       }
     }
@@ -1354,7 +1354,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
       // top of this function): only touch its loaded/label state on a genuine success — `succeeded`
       // is this frame's own local, so an outer/retried frame (where it's still false) never
       // clobbers the deepest frame's already-correct update.
-      if (succeeded && viewBtn) { viewBtn.dataset.loaded = '1'; viewBtn.textContent = '▴ Hide'; }
+      if (succeeded && viewBtn) { viewBtn.dataset.loaded = '1'; viewBtn.textContent = '▴ Ocultar'; }
     } else if (!retried) {
       // `retried` (only meaningful for the plain View/Analyze button) skips this entirely for an
       // outer frame that just recursed into a 409 retry — that recursive call's own finally is the
@@ -1364,7 +1364,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
       // ever reaching that far).
       if (succeeded) {
         btn.dataset.loaded = '1';
-        btn.textContent = '▴ Hide';
+        btn.textContent = '▴ Ocultar';
         btn.disabled = false;
         // v4.39: a row that started unanalyzed (plain "Analyze") is born with its ↻/Share buttons
         // present but .action-hidden (see renderRows) — a bare first-time analyze() success is
@@ -1372,7 +1372,7 @@ async function analyze(matchId, btn, i, attempt = 0) {
         document.getElementById('r' + i)?.classList.remove('action-hidden');
         document.getElementById('s' + i)?.classList.remove('action-hidden');
       } else {
-        btn.textContent = 'Analyze';
+        btn.textContent = 'Analizar';
         btn.disabled = false;
       }
     }
@@ -1804,7 +1804,7 @@ async function onShareClick(btn, matchId, riotId, key) {
       await analyze(matchId, viewBtn, key);
     } else if (!card.classList.contains('open')) {
       card.classList.add('open');
-      viewBtn.textContent = '▴ Hide';
+      viewBtn.textContent = '▴ Ocultar';
     }
     const region = CTX.riotId === riotId ? CTX.region : regionFromMatchId(matchId);
     let blob;
@@ -1866,7 +1866,7 @@ function facebookFIconSvg() {
 function linkGlyphSvg() {
   return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
 }
-const SHARE_TEXT = 'Was this lobby fair? — Losing Queue';
+const SHARE_TEXT = '¿Fue justa esta partida? — Losing Queue';
 // v4.38: Discord has no public web share-intent URL (unlike the other four) — verified there's
 // nothing equivalent to wa.me/reddit's submit/twitter's intent/facebook's sharer for it. The
 // honest fallback, same pattern as this app's other graceful-degradation spots (e.g. clipboard
@@ -1892,11 +1892,11 @@ async function handlePlatformClick(platform, gameUrl, fileName) {
   if (platform.id === 'reddit') {
     triggerImageDownload(fileName);
     window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(gameUrl)}&title=${encodeURIComponent(SHARE_TEXT)}`, '_blank', 'noopener,noreferrer');
-    showToast('Image downloaded — drag it into your Reddit post to make it an image post.');
+    showToast('Imagen descargada — arrastrala a tu post de Reddit para que sea un post de imagen.');
     return;
   }
   if (platform.id === 'discord') {
-    await copyToClipboardOrToast(gameUrl, 'Link copied — paste it in Discord');
+    await copyToClipboardOrToast(gameUrl, 'Link copiado — pegalo en Discord');
     window.open('https://discord.com/channels/@me', '_blank', 'noopener,noreferrer');
     return;
   }
@@ -1914,13 +1914,13 @@ function openShareModal(blob, riotId, matchId) {
   const gameUrl = shareLinkFor(riotId, matchId);
   const modal = $('#shareModal');
   modal.innerHTML = `
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Share">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Compartir">
       <div class="modal-header">
-        <span class="modal-title">Share</span>
-        <button type="button" class="modal-x" id="shModalClose" aria-label="Close">✕</button>
+        <span class="modal-title">Compartir</span>
+        <button type="button" class="modal-x" id="shModalClose" aria-label="Cerrar">✕</button>
       </div>
       <div class="share-platforms" id="shModalPlatforms">
-        ${SHARE_PLATFORMS.map(p => `<button type="button" class="platform-item" data-platform="${p.id}" title="Share on ${p.label}" aria-label="Share on ${p.label}">
+        ${SHARE_PLATFORMS.map(p => `<button type="button" class="platform-item" data-platform="${p.id}" title="Compartir en ${p.label}" aria-label="Compartir en ${p.label}">
           <span class="platform-circle" style="--pcolor:${p.color}">${p.icon()}</span>
           <span class="platform-label">${p.label}</span>
         </button>`).join('')}
@@ -1928,16 +1928,16 @@ function openShareModal(blob, riotId, matchId) {
       <div class="link-preview">
         <span class="link-icon">${linkGlyphSvg()}</span>
         <span class="link-text" title="${esc(gameUrl)}">${esc(gameUrl)}</span>
-        <button type="button" class="link-copy-btn" id="shModalCopyLink">Copy</button>
+        <button type="button" class="link-copy-btn" id="shModalCopyLink">Copiar</button>
       </div>
       <div class="modal-footer-actions">
-        <button type="button" class="ghost-download" id="shModalDownload">⬇ Download image</button>
+        <button type="button" class="ghost-download" id="shModalDownload">⬇ Descargar imagen</button>
       </div>
     </div>`;
   modal.classList.add('open');
   $('#shModalClose').addEventListener('click', closeShareModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeShareModal(); });
-  $('#shModalCopyLink').addEventListener('click', () => copyToClipboardOrToast(gameUrl, 'Link copied to clipboard'));
+  $('#shModalCopyLink').addEventListener('click', () => copyToClipboardOrToast(gameUrl, 'Link copiado al portapapeles'));
   $('#shModalDownload').addEventListener('click', () => triggerImageDownload(fileName));
   $('#shModalPlatforms').addEventListener('click', e => {
     const btn = e.target.closest('.platform-item'); if (!btn) return;
@@ -2090,51 +2090,51 @@ function chipsHTML(p, oppChamp, suppressDuo) {
   // it was reading as a lure rather than a real signal. Any legacy cached entry still carrying
   // the flag is simply ignored below; nothing renders it anymore.)
   const isSmurf = p.flags?.includes('smurf');
-  if (p.flags?.includes('autofill') && !isSmurf) c.push(['autofill', 'Playing outside their usual role', 'flag-autofill']);
+  if (p.flags?.includes('autofill') && !isSmurf) c.push(['autofill', 'Jugando fuera de su posición habitual', 'flag-autofill']);
   // otp and otp-denied are mutually exclusive at the engine level (see gaScore in lib/riot.mjs),
   // but a legacy cached analysis from before that fix can still carry both — defensively prefer
   // otp-denied (the risk signal) if a stale entry ever has both set.
   const isDenied = p.flags?.includes('otp-denied');
-  if (p.flags?.includes('otp') && !isDenied) c.push(['OTP', 'Plays this champion a lot and masters it', 'flag-otp']);
-  if (isDenied) c.push(['OTP denied', `One-trick on ${p.deniedChamp} but not playing it this game`, 'flag-otp-denied']);
+  if (p.flags?.includes('otp') && !isDenied) c.push(['OTP', 'Juega mucho este campeón y lo domina', 'flag-otp']);
+  if (isDenied) c.push(['OTP denied', `One-trick de ${p.deniedChamp} pero no lo está jugando esta partida`, 'flag-otp-denied']);
   // v4.4: OTP's mastery branch is now relative (dominant in the player's pool, not just >=150k
   // absolute) — a player with real career mastery on this champ who ISN'T currently a one-trick
   // on it (e.g. it's their 3rd-most-played champ, not their #1) gets this informational chip
   // instead of OTP, so the raw skill signal isn't lost even though it doesn't earn the OTP label.
-  if (p.flags?.includes('mastery')) c.push([`${Math.round((p.masteryPts || 0) / 1000)}k mastery`, 'Skilled on this champion but not playing it much lately', 'flag-mastery']);
+  if (p.flags?.includes('mastery')) c.push([`${Math.round((p.masteryPts || 0) / 1000)}k mastery`, 'Hábil con este campeón pero no lo juega mucho últimamente', 'flag-mastery']);
   // Goes through netCounter, not a raw counterPenalty(p.champ, oppChamp) call — a curated
   // bidirectional matchup (a handful exist in lib/counters.mjs) is a wash for this specific
   // head-to-head, not a "countered" chip for both laners at once.
-  if (oppChamp && netCounter(p.champ, oppChamp) === p.champ) c.push(['countered', `${p.champ} is countered by ${oppChamp}`, 'flag-countered']);
+  if (oppChamp && netCounter(p.champ, oppChamp) === p.champ) c.push(['countered', `${p.champ} es contrarrestado por ${oppChamp}`, 'flag-countered']);
   // Session-history warning flags — computed from the player's prior games / league entry,
   // shown compactly; each is rare enough that a plain chip (no icon) reads fine.
-  if (p.flags?.includes('tilt') && !isSmurf) c.push(['tilt?', '3+ games in the last ~3h with at least 2 losses — possible session tilt', 'flag-tilt']);
-  if (p.flags?.includes('rusty')) c.push(['rusty', "Hasn't played this queue in 14+ days — recent form may be less predictive", 'flag-rusty']);
-  if (p.flags?.includes('smurf')) c.push(['SMURF?', 'Low account level with a strong season winrate or recent KDA — likely outclasses their displayed rank', 'flag-smurf']);
-  if (p.flags?.includes('afk-risk')) c.push(['AFK risk', 'A recent game ended in an early surrender for this player — possible AFK/DC pattern', 'flag-afk']);
+  if (p.flags?.includes('tilt') && !isSmurf) c.push(['tilt?', '3+ partidas en las últimas ~3h con al menos 2 derrotas — posible tilt en la sesión', 'flag-tilt']);
+  if (p.flags?.includes('rusty')) c.push(['rusty', "No jugó esta cola en 14+ días — su forma reciente puede ser menos predecible", 'flag-rusty']);
+  if (p.flags?.includes('smurf')) c.push(['SMURF?', 'Nivel de cuenta bajo con un winrate de temporada alto o KDA reciente fuerte — probablemente supera el rango que muestra', 'flag-smurf']);
+  if (p.flags?.includes('afk-risk')) c.push(['AFK risk', 'Una partida reciente de este jugador terminó en una rendición temprana — posible patrón de AFK/desconexión', 'flag-afk']);
   if (p.duo && !suppressDuo) {
     const tip = p.duoWith
-      ? `Duo with ${p.duoWith} — ${p.duoRecord ? p.duoRecord + ' together in their last 5 shared games' : (p.duoShared != null ? p.duoShared + '/5 previous games together' : 'proven by shared pre-game matches')}`
-      : 'Queued with a teammate — proven by shared pre-game matches';
+      ? `Dúo con ${p.duoWith} — ${p.duoRecord ? p.duoRecord + ' juntos en sus últimas 5 partidas compartidas' : (p.duoShared != null ? p.duoShared + '/5 partidas anteriores juntos' : 'comprobado por partidas compartidas previas')}`
+      : 'En cola con un compañero — comprobado por partidas compartidas previas';
     c.push(['DUO', tip, 'flag-duo']);
   }
   if (p.streak) {
     const n = parseInt(p.streak), w = p.streak.endsWith('W');
-    if (n >= 3) c.push([w ? `🔥 ${n}W` : `❄️ ${n}L`, (w ? 'Win' : 'Loss') + ' streak entering this game', w ? 'streak-win' : 'streak-loss']);
+    if (n >= 3) c.push([w ? `🔥 ${n}W` : `❄️ ${n}L`, (w ? 'Racha de victorias' : 'Racha de derrotas') + ' antes de esta partida', w ? 'streak-win' : 'streak-loss']);
   }
   if (p.cspm != null && p.pos !== 'UTILITY') {
     const v = p.cspm;
-    const [cls, tip] = v >= 9 ? ['cs-elite', 'Elite farming (9+ per minute)']
-      : v >= 8 ? ['cs-good', 'Good farming (8+ per minute)']
-      : v >= 7 ? ['cs-ok', 'Decent farming (7+ per minute)']
-      : v >= 5.5 ? ['', 'Average farming']
-      : ['cs-low', 'Low farming (under 5.5 per minute)'];
+    const [cls, tip] = v >= 9 ? ['cs-elite', 'Farmeo de élite (9+ por minuto)']
+      : v >= 8 ? ['cs-good', 'Buen farmeo (8+ por minuto)']
+      : v >= 7 ? ['cs-ok', 'Farmeo decente (7+ por minuto)']
+      : v >= 5.5 ? ['', 'Farmeo promedio']
+      : ['cs-low', 'Farmeo bajo (menos de 5.5 por minuto)'];
     c.push([`${v} cs`, tip, cls]);
   }
   // Season winrate only shows up as a chip when it's extreme (and the sample is big enough to
   // mean something) — otherwise it's just noise; the routine case lives in the Rank column text.
   if (p.seasonGames >= 20 && p.wr != null && (p.wr >= 58 || p.wr <= 44)) {
-    c.push([`${p.wr}% wr`, `Season winrate over ${p.seasonGames} games`, p.wr >= 58 ? 'wr-hi' : 'wr-lo']);
+    c.push([`${p.wr}% wr`, `Winrate de temporada en ${p.seasonGames} partidas`, p.wr >= 58 ? 'wr-hi' : 'wr-lo']);
   }
   return c.map(([l, t, cls]) => `<span class="chip${cls ? ' ' + cls : ''}" title="${esc(t)}">${l}</span>`).join('');
 }
@@ -2205,7 +2205,7 @@ function rankTag(rankStr, wr, seasonGames) {
 // to the raw rank string (e.g. "Unranked") when it doesn't parse as a normal ranked entry.
 function rankDetailLabel(rankStr, wr) {
   const p = parseRank(rankStr);
-  const base = p ? p.full : (rankStr || 'Unranked');
+  const base = p ? p.full : (rankStr || 'Sin rango');
   return base + (wr != null ? ` · ${wr}%` : '');
 }
 // v4.17: mirrors lib/riot.mjs's rankDivisionIndex/rankGapAdj — direct head-to-head rank gap
@@ -2217,7 +2217,7 @@ function rankDetailLabel(rankStr, wr) {
 // at ±8, added ONCE per lane (not once per side) so it can never contradict the engine's version.
 const RANK_LANE_WEIGHT = 2, RANK_LANE_CAP = 8;
 function rankDivisionIndex(rankStr) {
-  if (!rankStr || rankStr === 'Unranked') return null;
+  if (!rankStr || rankStr === 'Sin rango') return null;
   const [tierWord, div] = rankStr.split(' ');
   const tier = RANK_TIER.indexOf(tierWord);
   if (tier === -1) return null;
@@ -2544,7 +2544,7 @@ function laneDifferentiators(b, r, allPlayers) {
   // weighting, which deliberately zeroes the apex division bonus; unrelated concerns that happen
   // to share a tier-order scale).
   const rankValue = p => {
-    if (!p?.rank || p.rank === 'Unranked') return null;
+    if (!p?.rank || p.rank === 'Sin rango') return null;
     const [tierWord, div] = p.rank.split(' ');
     const tier = RANK_TIER.indexOf(tierWord);
     return tier === -1 ? null : tier * 4 + (RANK_DIV[div] ?? 0);
@@ -2615,17 +2615,17 @@ function laneVerdict(a, b, riskNote, favorTooltip, skipEvenSide) {
     if (skipEvenSide) {
       const side = d !== 0 ? (d > 0 ? 'blue' : 'red') : skipEvenSide;
       const shown = d !== 0 ? adDisplay : 1; // exact wash: non-autofilled side still gets a nominal +1
-      const sideLabel = side === 'blue' ? 'Blue' : 'Red';
-      const title = favorTooltip || riskNote || `${sideLabel} side favored: one-sided autofill risk keeps this lane from reading even`;
-      return `<span class="lv-${side}" title="${esc(title)}">${side.toUpperCase()} +${shown}</span>`;
+      const sideLabel = side === 'blue' ? 'Azul' : 'Rojo';
+      const title = favorTooltip || riskNote || `${sideLabel} favorecido: el riesgo de autofill de un solo lado hace que esta línea no se lea como pareja`;
+      return `<span class="lv-${side}" title="${esc(title)}">${sideLabel.toUpperCase()} +${shown}</span>`;
     }
-    const evenTitle = riskNote || `Even matchup — pre-game GA gap of only ${adDisplay} points`;
-    return `<span class="lv-even" title="${esc(evenTitle)}">EVEN</span>`;
+    const evenTitle = riskNote || `Enfrentamiento parejo — diferencia de GA previa a la partida de solo ${adDisplay} puntos`;
+    return `<span class="lv-even" title="${esc(evenTitle)}">PAREJO</span>`;
   }
   const heavy = ad > 18;
-  const strength = heavy ? 'HEAVILY favored' : 'favored';
-  const side = d > 0 ? 'blue' : 'red', sideLabel = side === 'blue' ? 'Blue' : 'Red';
-  const title = favorTooltip || `${sideLabel} side ${strength}: +${adDisplay} GA advantage before the game started`;
+  const strength = heavy ? 'MUY favorecido' : 'favorecido';
+  const side = d > 0 ? 'blue' : 'red', sideLabel = side === 'blue' ? 'Azul' : 'Rojo';
+  const title = favorTooltip || `${sideLabel} ${strength}: +${adDisplay} de ventaja en GA antes de empezar la partida`;
   return `<span class="lv-${side}" title="${esc(title)}">${side.toUpperCase()} +${adDisplay}</span>`;
 }
 
@@ -2805,9 +2805,9 @@ function matchupHTML(g, rid, key = 'x') {
   // cached analyses.
   const teamGaText = (teamGa, bonus, autofillN) => {
     const tags = [];
-    if (bonus > 0) tags.push(`<span title="GA bonus for proven duo synergy">+${bonus} duo</span>`);
-    if (autofillN > 0) tags.push(`<span class="af-count" title="${autofillN} autofilled player${autofillN === 1 ? '' : 's'} on this team — off-role risk, weighed into the net">${autofillN} autofill</span>`);
-    return `<span title="65% team average + 35% average of the top 2 GAs">team GA</span> ${teamGa ?? '–'}` + (tags.length ? ` (${tags.join(' · ')})` : '');
+    if (bonus > 0) tags.push(`<span title="Bono de GA por sinergia de dúo comprobada">+${bonus} dúo</span>`);
+    if (autofillN > 0) tags.push(`<span class="af-count" title="${autofillN} jugador${autofillN === 1 ? '' : 'es'} en posición no elegida en este equipo — riesgo de rol forzado, incluido en el cálculo">${autofillN} autofill</span>`);
+    return `<span title="65% promedio del equipo + 35% promedio de los 2 mejores GA">GA equipo</span> ${teamGa ?? '–'}` + (tags.length ? ` (${tags.join(' · ')})` : '');
   };
   // v4.22/v-team-synergy: side-by-side synergy comparisons fold into the merged DRAFT pill's
   // inline component list below (was its own standalone bot-lane-only line — see draftPillHTML's
@@ -2828,9 +2828,9 @@ function matchupHTML(g, rid, key = 'x') {
     }
   }
   return `<table class="matchup">
-    <tr><th class="champ-c"></th><th><span class="tm-blue">BLUE</span>${g.userTeam === 'blue' ? ' <span class="gold">YOU</span>' : ''}</th><th class="mid-v">Favored</th><th class="rgt"><span class="tm-red">RED</span>${g.userTeam === 'red' ? ' <span class="gold">YOU</span>' : ''}</th><th class="champ-c"></th></tr>
+    <tr><th class="champ-c"></th><th><span class="tm-blue">AZUL</span>${g.userTeam === 'blue' ? ' <span class="gold">VOS</span>' : ''}</th><th class="mid-v">Favorecido</th><th class="rgt"><span class="tm-red">ROJO</span>${g.userTeam === 'red' ? ' <span class="gold">VOS</span>' : ''}</th><th class="champ-c"></th></tr>
     ${rows}
-    <tr class="teamrow"><td colspan="2"><b><span class="tm-blue">TEAM</span> · ${blueWon ? 'win' : 'loss'} · ${teamGaText(gB, g.duoBonus?.blue, g.autofillCounts?.blue)}</b></td><td class="mid-v"><span class="badge ${verdictCls(g.matchmaking, g.direction)}" title="${esc(verdictTitle(g.matchmaking, g.direction, g.verdictTooltip))}">${verdictLabel(g.matchmaking, g.direction)}</span>${winProbHTML(g.winProb)}${draftPillHTML(g.draft, draftComponents)}</td><td colspan="2" class="rgt"><b><span class="tm-red">TEAM</span> · ${blueWon ? 'loss' : 'win'} · ${teamGaText(gR, g.duoBonus?.red, g.autofillCounts?.red)}</b></td></tr>
+    <tr class="teamrow"><td colspan="2"><b><span class="tm-blue">EQUIPO</span> · ${blueWon ? 'victoria' : 'derrota'} · ${teamGaText(gB, g.duoBonus?.blue, g.autofillCounts?.blue)}</b></td><td class="mid-v"><span class="badge ${verdictCls(g.matchmaking, g.direction)}" title="${esc(verdictTitle(g.matchmaking, g.direction, g.verdictTooltip))}">${verdictLabel(g.matchmaking, g.direction)}</span>${winProbHTML(g.winProb)}${draftPillHTML(g.draft, draftComponents)}</td><td colspan="2" class="rgt"><b><span class="tm-red">EQUIPO</span> · ${blueWon ? 'derrota' : 'victoria'} · ${teamGaText(gR, g.duoBonus?.red, g.autofillCounts?.red)}</b></td></tr>
   </table>`;
 }
 
@@ -2847,9 +2847,9 @@ function detailsHTML(g, key = 'x', rid) {
     const rows = (g.players || []).filter(p => p.team === t);
     if (!rows.length) return '';
     const won = (g.result === 'Victory') === (g.userTeam === t);
-    return '<h4><span class="tm-' + t + '">' + t.toUpperCase() + '</span>' + (g.userTeam === t ? ' <span class="gold">YOU</span>' : '') + ' · ' + (won ? 'win' : 'loss') +
-      (g.teamGA && g.teamGA[t] ? ' · team GA ' + g.teamGA[t] : '') + '</h4>' +
-      '<table class="details-table">' + detailsColgroup + '<tr><th>Player</th><th>Rank</th><th>Pos</th><th>Champ</th><th>KDA</th><th>Dmg</th><th>CS</th><th>GA</th><th title="In-game performance score — how well they actually played, independent of the pre-game fairness verdict">Perf</th><th title="Wins-losses in their last 5 ranked games before this one">Last 5 games</th></tr>' +
+    return '<h4><span class="tm-' + t + '">' + (t === 'blue' ? 'AZUL' : 'ROJO') + '</span>' + (g.userTeam === t ? ' <span class="gold">VOS</span>' : '') + ' · ' + (won ? 'victoria' : 'derrota') +
+      (g.teamGA && g.teamGA[t] ? ' · GA equipo ' + g.teamGA[t] : '') + '</h4>' +
+      '<table class="details-table">' + detailsColgroup + '<tr><th>Jugador</th><th>Rango</th><th>Pos</th><th>Camp.</th><th>KDA</th><th>Daño</th><th>CS</th><th>GA</th><th title="Puntaje de rendimiento en partida — qué tan bien jugó realmente, independiente del veredicto de equilibrio previo a la partida">Rend.</th><th title="Victorias-derrotas en sus últimas 5 partidas ranked antes de esta">Últimas 5</th></tr>' +
       rows.map(p => {
         const isMe = p.n.replace('#', '-').toLowerCase() === meName;
         const gaCls = p.ga == null ? '' : p.ga >= 70 ? 'ga-hi' : p.ga <= 45 ? 'ga-lo' : '';

@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     await store.init();
     const riotId = String(req.query.riotId || '').trim().replace(/\s*#\s*/, '#');
     const region = String(req.query.region || 'euw').replace(/[^a-z]/g, '');
-    if (!riotId.includes('#')) return res.status(400).json({ error: 'riotId (Name#TAG) required' });
+    if (!riotId.includes('#')) return res.status(400).json({ error: 'se requiere riotId (Nombre#TAG)' });
     const [name, tag] = riotId.split('#');
 
     userKey = req.headers['x-api-key'];
@@ -32,14 +32,14 @@ export default async function handler(req, res) {
     let quotaKey = ip;
 
     if (!key) {
-      if (!sharedKey) return res.status(400).json({ error: 'No API key: paste your own Riot key (developer.riotgames.com)' });
+      if (!sharedKey) return res.status(400).json({ error: 'No hay clave de API: pegá tu propia clave de Riot (developer.riotgames.com)' });
       const uid = await userFromReq(req);
       quotaKey = uid || ip;
       const q = await store.checkQuota(quotaKey, uid ? 5 : 3);
-      if (!q.allowed) return res.status(429).json({ error: `Free limit reached (${q.limit}/day). Paste your own free Riot API key for unlimited analyses.`, quota: q });
+      if (!q.allowed) return res.status(429).json({ error: `Límite gratuito alcanzado (${q.limit}/día). Pegá tu propia clave gratuita de Riot API para análisis ilimitados.`, quota: q });
       lockHolder = randomUUID();
       if (!(await store.acquireLock(lockHolder))) {
-        return res.status(409).json({ queued: true, error: 'The free analyzer is busy — retrying automatically…' });
+        return res.status(409).json({ queued: true, error: 'El analizador gratuito está ocupado — reintentando automáticamente…' });
       }
       key = sharedKey;
       usingShared = true;
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     try {
       const c = makeClient(key, region);
       const acct = await resolveAccount(c, name, tag);
-      if (!acct) return res.status(404).json({ error: 'account not found' });
+      if (!acct) return res.status(404).json({ error: 'cuenta no encontrada' });
       const entry = await analyzeLive(c, store, { name, tag, puuid: acct.puuid });
       if (usingShared) await store.incQuota(quotaKey);
       if (entry.inGame === false) return res.status(200).json({ inGame: false });
@@ -58,6 +58,6 @@ export default async function handler(req, res) {
       if (lockHolder) await store.releaseLock(lockHolder);
     }
   } catch (e) {
-    res.status(500).json({ error: e.message + (userKey ? ' (your pasted key)' : ' (the shared server key)') });
+    res.status(500).json({ error: e.message + (userKey ? ' (tu clave pegada)' : ' (la clave compartida del servidor)') });
   }
 }

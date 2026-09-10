@@ -13,7 +13,7 @@ import { makeClient } from '../lib/riot.mjs';
 
 export default async function handler(req, res) {
   const key = req.headers['x-api-key'];
-  if (!key) return res.status(400).json({ valid: false, status: 0, error: 'no key provided' });
+  if (!key) return res.status(400).json({ valid: false, status: 0, error: 'no se proporcionó ninguna clave' });
   try {
     const c = makeClient(key, 'euw');
     await c.api(c.platform, '/lol/status/v4/platform-data');
