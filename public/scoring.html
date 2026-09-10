@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How we score — Losing Queue</title>
+<link rel="canonical" href="https://www.losingqueue.lol/scoring.html">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<style>
+  :root { --bg:#0e1015; --card:#181b22; --line:#262b36; --txt:#e8eaf0; --dim:#8a91a3;
+          --ok:#3fb68b; --mid:#e0a63d; --bad:#e05d5d; --blue:#4a90d9; --perf:#3fc8d4; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--txt); font:14px/1.4 system-ui, sans-serif; padding:18px; max-width:760px; margin:auto; }
+  a { color:var(--ok); }
+  .back { display:inline-block; color:var(--dim); text-decoration:none; font-size:20px; line-height:1; padding:6px 8px; margin:-6px 0 4px -8px; border-radius:6px; }
+  .back:hover { color:var(--ok); }
+  h1 { font-size:20px; margin-bottom:2px; display:inline-block; }
+  h1 span { color:var(--ok); }
+  .ga-def { color:var(--dim); font-size:13px; margin:2px 0 12px; }
+  h2 { font-size:13px; margin:14px 0 4px; text-transform:uppercase; letter-spacing:.4px; color:var(--dim); }
+  h2:first-of-type { margin-top:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:4px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:3px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  tr:last-child td { border-bottom:none; }
+  td.n { color:var(--ok); font-weight:700; white-space:nowrap; }
+  code { background:#20242d; border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:12px; color:var(--txt); }
+  ul { padding-left:18px; margin:2px 0; columns:2; column-gap:24px; }
+  li { margin:2px 0; font-size:13px; break-inside:avoid; }
+  .thresh { font-size:13px; margin-top:5px; }
+  .chip { display:inline-block; font-size:11px; background:#20242d; border:1px solid var(--line); border-radius:99px; padding:1px 8px; color:var(--dim); }
+  .chip.ok { color:var(--ok); border-color:var(--ok); }
+  .chip.mid { color:var(--mid); border-color:var(--mid); }
+  .chip.bad { color:var(--bad); border-color:var(--bad); }
+  .chip.blue { color:var(--blue); border-color:var(--blue); }
+  .chip.perf { color:var(--perf); border-color:var(--perf); }
+  .close { font-size:12.5px; color:var(--mid); margin-top:14px; padding-top:10px; border-top:1px solid var(--line); }
+  footer { margin-top:12px; padding-top:8px; border-top:1px solid var(--line); font-size:11px; color:var(--dim); text-align:center; }
+</style>
+</head>
+<body>
+  <a class="back" href="/" title="Back to the app">←</a>
+  <h1>How we <span>score</span></h1>
+  <p class="ga-def">GA: 0–100 pre-game strength from ranked history — nothing from the game itself counts.</p>
+
+  <h2>GA components</h2>
+  <div class="card">
+    <table>
+      <tr><th>Component</th><th>Pts</th><th>How</th></tr>
+      <tr><td>Form</td><td class="n">27</td><td>last-5 W/L ×22, streak ±2, rust −2, AFK −2</td></tr>
+      <tr><td>Performance</td><td class="n">25</td><td>avg KDA (capped 10) ×5</td></tr>
+      <tr><td>Champion comfort</td><td class="n">20</td><td>games on champ ×4 + mastery (full for one-tricks, 60% for high mastery without recent usage), OTP-denied −5</td></tr>
+      <tr><td>Role heat</td><td class="n">15</td><td>3 + 12 × role share of last 5</td></tr>
+      <tr><td>Rank vs lobby</td><td class="n">10</td><td>tier vs lobby avg, smurf +3 (cap 10)</td></tr>
+      <tr><td>Season winrate</td><td class="n">5</td><td>WR tiers, needs 20+ season games</td></tr>
+    </table>
+    <div class="thresh">Detected smurfs floor at GA 65 and skip account-history penalties (autofill/tilt) — a fresh account's thin role/champ history doesn't make an experienced player weak. The +3 rank-pts bump above still applies underneath; the floor is what catches the flagrant cases.</div>
+  </div>
+
+  <h2>Lane verdicts</h2>
+  <div class="card">
+    <div class="thresh"><b>v4.21 split:</b> fairness must reflect Riot's matchmaking algorithm; draft quality (counter picks, bot-lane synergy) is the players' own doing in champ select — the two are never mixed together for the verdict anymore (see the Matchmaking/Draft cards below). The lane table itself still shows one COMBINED number per lane (MM + draft) — that's still the practical head-to-head read of "who's actually ahead in this lane" — only the verdict math underneath was split.</div>
+    <code>adjusted GA (shown per lane) = GA − 5 autofill [MM] − counter (role-weighted) [DRAFT] + 3 duo'd (+9/+12/+15 if the duo includes a jungler, adaptive) [MM] ± 2/division head-to-head rank gap, capped ±8 [MM] ± team synergy, any role pair op.gg publishes data for (not just bot lane), each pair capped ±4 [DRAFT]</code>
+    <div class="thresh"><span class="chip ok">EVEN ≤5</span> · <span class="chip mid">favored 6–18</span> · <span class="chip bad">heavy &gt;18</span> — except when exactly one laner is autofilled: that lane never reads EVEN (the non-autofilled side gets at least +1) even if the adjusted numbers land inside the band, since off-role risk is an inherent edge the raw gap doesn't fully capture.</div>
+    <div class="thresh">[DRAFT] Counter penalty is role-weighted, not flat: −8 top/mid (solo lanes, no one to bail them out), −4 jungle, −3 bot/supp (a partner — jungler ganks, lane duo — can offset a bad matchup). lib/counters.mjs itself stays a clean binary "known counter or not" matrix; the GA cost is scaled at the lane the countered player is actually in.</div>
+    <div class="thresh">[MM] The duo bonus applies to whichever lane each half of a duo pair is playing — separate from (and on top of) the team-level duo bonus below. A same-lane duo gets a flat +3. A jungle-inclusive duo's bonus is ADAPTIVE instead — it scales with how far behind the duo'd laner's GA deficit is vs their direct lane opponent (deficit &lt;10 → +9, 10–19 → +12, ≥20 → +15; a duo'd laner who's ahead still gets the baseline +9, never a penalty). Real cases drove this: a duo'd laner going 11/4/12 through a ~34-point GA deficit, and another MVP-ing at 1/8/27 — the box score alone read as a stomp, but the jungler had been propping the lane up the whole game.</div>
+    <div class="thresh">[MM] Rank is shown directly on each player (a compact tag next to GA — "E4 · 51%", "M" alone for Master+ with no games yet — hover for full rank + LP + W-L). The lane math also weighs the direct HEAD-TO-HEAD rank gap between the two lane opponents specifically: 2 GA per division of gap (tier×4 + division, Master+ collapsed to tier base), capped at ±8 total, favoring the higher-ranked side. Separate from and additional to the rank-vs-lobby-average signal already baked into each player's GA.</div>
+    <div class="thresh">Every champion name in the matchup table (dashed underline, hover) shows its current meta — win/pick/ban rate — from a static per-patch snapshot (<code>lib/champstats.mjs</code>, community-editable and refreshed per patch, same spirit as the counter matrix); info only, no scoring impact. A champion missing from the snapshot just shows as plain text, no hover.</div>
+    <div class="thresh">[DRAFT] Team-wide draft synergy — a <span class="chip ok">top+jungle +2.4%</span>/<span class="chip bad">bot −1.8%</span> chip, labeled by the actual role pair, on any lane whose player is part of a qualifying role-pair (started as bot-lane/ADC+SUPPORT-only; now also TOP/JUNGLE/MIDDLE paired with any later role — whichever pairs op.gg actually publishes synergy pages for), from <code>lib/duosynergy.mjs</code>'s per-patch <code>ROLE_PAIRS</code> snapshot. The number is the pair's own winrate minus the MEAN of both champs' individual solo winrates (<code>lib/champstats.mjs</code>) — so it isolates "does this specific pairing work," not just "are both champs individually strong." A missing pairing (coverage is each curated champion's top-10 partners per role by play count, not exhaustive) means no chip and no adjustment, never a guessed number. A role that qualifies for more than one pair type (e.g. jungle with top/mid/bot/support) shows only its single most significant pairing, to keep the row from cluttering. TEAM footer and the DRAFT pill's tooltip show both sides' values side by side per pair type when both have data. When the pairing is ALSO a real queued duo (the same two players, not just any teammates), the two signals merge into one <span class="chip ok">DUO +2.4%</span> chip instead of a separate plain DUO chip and a synergy chip both claiming the word "duo" — its tooltip covers the shared-games record and the synergy delta together. A queued duo with no synergy data for their specific champion pairing still shows the plain <span class="chip">DUO</span> chip, unchanged.</div>
+    <div class="thresh">Smurf-flagged players skip the autofill term entirely (0, not just reduced) — the countered term still applies.</div>
+    <div class="thresh">Each player row can carry a small <span class="chip build-h">build</span> chip (click to expand) — a recommended keystone/core items/boots/skill order for that champion+role, from <code>lib/builds.mjs</code>'s per-patch snapshot (deeplol.gg's public soloq-build data, KR Emerald+, real win_rate/games shown alongside it). When a real pro-tracked game exists for this exact champion+opponent matchup, the panel adds a one-line "Pro example: built X into Y" from <code>lib/proExamples.mjs</code> (lolvvv.com) — a thin, illustrative data source (some champions have only a handful of tracked games), never a win-rate claim. Either or both missing → no chip at all, never a fabricated build.</div>
+  </div>
+
+  <h2>Matchmaking verdict (Riot's algo)</h2>
+  <div class="card">
+    <div class="thresh">FAIR / NOT FAIR answers one question only: did Riot deal a stacked lobby. Counter picks and team synergy — what the two teams chose to DO with the lobby they were given — never factor in here; see the Draft verdict card below for those.</div>
+    <ul>
+      <li>Team GA gap ≥12 (incl. duo bonus, cap 24)</li>
+      <li>Tier spread inside a team ≥2.5</li>
+      <li>Risk asymmetry (autofill) ≥8</li>
+      <li>2+ lanes heavily favored one side</li>
+      <li>Blowout lane ≥30 GA</li>
+      <li>Net lane advantage ≥35 GA</li>
+    </ul>
+    <div class="thresh">Team GA = 65% team avg + 35% avg of top 2 GAs (not a flat average).</div>
+    <div class="thresh">Duo bonus per pair: 8 with a winning joint record together, 6 mixed, 5 losing (v4.23, up from 4 — even a losing-joint-record duo coordinates), +0 with no shared prior game to judge by — plus a hot-duo streak bonus on top: +3 if BOTH partners are individually on a 3+ win streak right now, +5 if both are on a 5+ win streak (one partner streaking alone doesn't count). v4.23: when exactly ONE team has any duo at all, that team's summed pair bonus gets a further +3 "presence" bonus — a coordinated pair against a pure-solo team is its own edge (comms, shared calls, synced objective timing) independent of that pair's own record. A team with 2+ duos gets its total (pair bonus + presence, if any) amplified ×1.35 (v4.6, up from ×1.25 — 4 players coordinating vs 2), capped at 24.</div>
+    <div class="thresh"><code>netMM = 0.5 × (signed MM-only lane-delta sum, per-lane capped ±15) + team GA gap + 1.5 × duo bonus difference + (enemy autofill weight − your autofill weight)</code> — a trigger above only becomes NOT FAIR if |netMM| stays ≥10 GA one way; smaller nets mean the factors offset each other, so it's still FAIR (hover the badge for what offset what). Lane sum is damped to half weight and duo asymmetry weighted up 1.5x so a team with two coordinated duos can genuinely offset a lead built from several small favorable lanes. Each lane's SIGNED contribution to the sum is capped at ±15 before it's added — a single blown-out lane can no longer outvote the other four just by itself; the lane's own displayed number, and its heavy/blowout reasons, still show the real uncapped MM delta. Autofill weight escalates rather than scaling linearly with count — 1st autofill costs 5, the 2nd (and every one after) costs 15 more each (1→5, 2→20, 3→35). Shown directly in the TEAM footer ("team GA 60 (+8 duo · 2 autofill)", amber) so it's never just implied by the badge.</div>
+    <div class="thresh">Three badge states: <span class="chip ok">FAIR</span> green, <span class="chip bad">NOT FAIR</span> red when the lobby was stacked against you, <span class="chip mid">FAVORED</span> amber when it was stacked in your favor (v4.33 — was also labeled "NOT FAIR", color-only; a lobby that leaned your way isn't the same thing as one that leaned against you, so it gets its own word now, not just its own color). Hover any of the three for the actual reason. No more "mixed" — every non-fair verdict points a clear direction.</div>
+    <div class="thresh">3+ consecutive NOT FAIR-against games flags a possible losing queue — based purely on matchmaking imbalance, never on whether those games were actually won or lost.</div>
+  </div>
+
+  <h2>Draft verdict (champ select)</h2>
+  <div class="card">
+    <div class="thresh">A second, separate verdict — "did the two teams' PICKS create an imbalance," independent of whether matchmaking itself was fair. Shown as a bordered pill under the fairness badge: <span style="color:var(--ok);font-weight:700">DRAFT · GOOD +6</span> / <span style="color:var(--bad);font-weight:700">DRAFT · BAD −8</span> / <span style="color:var(--dim)">DRAFT · EVEN</span>, with the fired components (e.g. "Yasuo countered by Annie −8 · jungle+mid synergy −3") inline when they fit, else in the tooltip only. Only rendered when at least one draft component actually fired — a game with no counters and no bot-synergy data shows nothing, not a false "EVEN".</div>
+    <div class="thresh"><code>netDraft = 0.5 × (signed counter+synergy lane-delta sum, per-lane capped ±15) + (your team synergy − enemy team synergy, summed across every qualifying role pair, capped ±5)</code> — <span class="chip bad">BAD</span> at netDraft ≤ −5, <span class="chip ok">GOOD</span> at ≥ +5, <span class="chip mid">EVEN</span> between. Deliberately smaller thresholds than the matchmaking verdict's ±10, since each individual draft input (a counter penalty, a synergy delta) is itself capped much lower than an MM factor like team GA gap.</div>
+    <div class="thresh">What each verdict means, hover-for-detail on the pill itself: <span class="chip ok">GOOD</span> your team gained an edge at champion select (counters/synergy) — before the game even started. <span class="chip bad">BAD</span> your team lost champion select — picked into counters or a weak duo; this is on the players, not Riot's matchmaking. <span class="chip mid">EVEN</span> champion select gave neither team a meaningful edge — the picks roughly cancel out.</div>
+  </div>
+
+  <h2>Win probability</h2>
+  <div class="card">
+    <div class="thresh">Logistic on netMM + netDraft (the ONE place both sub-nets are summed back together) — winProb predicts the OUTCOME, not fairness, so it has to account for a draft-side stomp (a hard counter, a strong bot duo) the same as a matchmaking-side one, even though the verdict badge (netMM only) doesn't. |netMM+netDraft| 10 → ~55/45, |netMM+netDraft| 20 → ~60/40. Conservatively calibrated — our analysis database is still small (~34 games), so this ships a deliberately gentle curve rather than an aggressive best-fit; refit planned as the game database grows.</div>
+  </div>
+
+  <h2>Performance score (in-game, not fairness)</h2>
+  <div class="card">
+    <div class="thresh">GA predicts BEFORE the game — history, rank, comfort. Performance score rates AFTER the game — how you actually played THIS match. Two different questions, never mixed: perf score has zero input into GA, the fairness verdict, the draft verdict, or win probability.</div>
+    <div class="thresh">Shown as a <span class="chip perf">7.8/10</span> tag on every player, both in the matchup rows and the per-team Details table.</div>
+    <div class="thresh">Same underlying metric that already ranks the lobby 1st–10th and picks MVP/ACE: KDA + kill participation + damage share + objective damage share + damage-taken share (halved past 6 deaths) + CS/min + vision/min, support-friendly weights.</div>
+    <code>perfScore = 1 + 9 × (yourRaw − lobbyMinRaw) / (lobbyMaxRaw − lobbyMinRaw)</code>
+    <div class="thresh">Min-max normalized against the OTHER 9 players in that specific game (not a fixed scale) — a stomp and a close game both spread their 10 raw scores across a similarly-sized range, but where that range SITS varies game to game, so anchoring to this lobby's own best/worst keeps the 1–10 read comparable across games. Flat game (practically only &lt;2 scoreable players) falls back to a neutral 5.5.</div>
+    <div class="thresh">Live (in-progress) games don't get a score — the underlying metric needs final damage/objective/vision numbers, which don't exist until the game ends. Games analyzed before this feature shipped also show no tag rather than a guessed number.</div>
+    <div class="thresh">Click a player's score tag to reveal the actual numbers behind it — their real KDA, kill participation %, damage share, objective share, damage-taken share, CS/min and vision/min for that game, not just the category names. Legacy/live entries with no per-value breakdown fall back to a plain hover tooltip naming the categories.</div>
+  </div>
+
+  <h2>Chips</h2>
+  <div class="card">
+    <table>
+      <tr><td><span class="chip blue">OTP</span></td><td>4+/5 games, or 150k+ mastery AND the champ dominates their pool (their #1 mastery champ, or ≥50% of their #1's points)</td></tr>
+      <tr><td><span class="chip blue">Nk mastery</span></td><td>150k+ mastery but NOT dominant enough for OTP — real skill, just not their current main (e.g. 318k mastery)</td></tr>
+      <tr><td><span class="chip mid">OTP denied</span></td><td>one-trick, different champ this game</td></tr>
+      <tr><td><span class="chip blue">DUO</span></td><td>proven by shared pre-game matches</td></tr>
+      <tr><td><span class="chip mid">autofill</span></td><td>off their usual role</td></tr>
+      <tr><td><span class="chip bad">countered</span></td><td>on the lane-counter list — role-weighted GA cost (see Lane verdicts above), chip shows regardless of size</td></tr>
+      <tr><td><span class="chip bad">SMURF?</span></td><td>low level, WR≥58% or KDA≥5 — floors GA at 65, exempt from autofill/tilt</td></tr>
+      <tr><td><span class="chip mid">tilt?</span></td><td>3+ games/3h, 2+ losses — info only, no score impact</td></tr>
+      <tr><td><span class="chip mid">rusty</span></td><td>14+ days since last game</td></tr>
+      <tr><td><span class="chip bad">AFK risk</span></td><td>recent early-surrender game</td></tr>
+      <tr><td><span class="chip ok">🔥</span> / <span class="chip bad">❄️</span> streaks</td><td>3+ win/loss streak</td></tr>
+      <tr><td>cs/min tiers</td><td>elite 9+ · good 8+ · low &lt;5.5</td></tr>
+      <tr><td>wr extremes</td><td>≥58% or ≤44%, 20+ games</td></tr>
+    </table>
+  </div>
+
+  <p class="close">Heuristics, not truth — a NOT FAIR game is still winnable. Counter matrix is <a href="https://github.com/angelstreet/losingqueue/blob/main/lib/counters.mjs" target="_blank" rel="noreferrer">community-editable on GitHub</a>.</p>
+
+  <footer>
+    <a href="https://github.com/angelstreet/losingqueue" target="_blank" rel="noreferrer">⭐ Open source</a>
+    <span> · MIT · not endorsed by Riot Games</span>
+  </footer>
+</body>
+</html>

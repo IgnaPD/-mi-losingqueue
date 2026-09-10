@@ -1,0 +1,518 @@
+:root { --bg:#0e1015; --card:#181b22; --line:#262b36; --txt:#e8eaf0; --dim:#8a91a3;
+        --ok:#3fb68b; --mid:#e0a63d; --bad:#e05d5d; --blue:#4a90d9; --red:#d97a4a;
+        --perf:#3fc8d4; --splash-img:none; }
+* { box-sizing:border-box; margin:0; }
+/* v4.19: widened 980 -> 1200 — the rank·WR tags (v4.18) pushed some matchup player cells to wrap
+   onto 2 lines at the old width, and 980 was leaving large unused side margins on typical desktop
+   screens anyway. Side margins stay auto-centered (margin:auto unchanged); everything below that
+   depends on width uses %, ch, or its own unrelated fixed px (e.g. .pname's 150px truncation) —
+   nothing was hardcoded against 980 specifically, so rows just gain slack, they don't reflow. */
+body { background:var(--bg); color:var(--txt); font:15px/1.5 system-ui, sans-serif; padding:24px; max-width:1200px; margin:auto; position:relative; }
+/* v4.27: full-page background art — approved from public/mockup-v2.html (now removed). The
+   searched player's most-played champion across their currently-listed games (main.js's
+   updateBgSplash, called from renderRows) as a Data Dragon splash, darkened to ~13% visibility
+   under a solid dark overlay stacked in the SAME background-image list (drawn first = on top) —
+   ambiance, not wallpaper. --splash-img defaults to 'none' (plain bg — before any search, or a
+   search whose games carry no champ data) and main.js only ever commits a NEW url() after
+   preloading it successfully, so a 404 silently keeps whatever was showing (or stays plain) rather
+   than flashing a broken background. .has-splash (toggled alongside the CSS var) drives the
+   opacity fade so the very first appearance (blank -> first champ) transitions smoothly instead of
+   popping in; a later re-search's image swap is instant (no cross-fade between two photos), which
+   is an intentional, low-risk simplification — see main.js's updateBgSplash comment. z-index:0
+   sits behind everything real (#app below is the z-index:1 stacking context that holds it there);
+   pointer-events:none so it can never intercept a click meant for the page above it. */
+body::before { content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(14,16,21,.87), rgba(14,16,21,.87)),
+    var(--splash-img);
+  background-size:cover; background-position:center 18%;
+  opacity:0; transition:opacity .5s ease; }
+body.has-splash::before { opacity:1; }
+/* #app holds everything main.js renders (header, form, game list, footer) as direct children —
+   one stacking context above body::before is enough to keep all of it above the background art. */
+#app { position:relative; z-index:1; }
+/* v4.28: h1 is now ALWAYS a flex row (was block-with-a-float, made flex only on mobile) — it's
+   also a flex ITEM of .site-header now (sharing the row with .lol-logo), and a shrink-to-fit flex
+   item can't give its own float:right child anywhere real to float TO (the old float-right
+   .h1-right rule was landing right after the UNOFFICIAL badge instead of the header's outer right
+   edge). flex:1 makes h1 claim the rest of the row after the logo, and .h1-right's
+   margin-left:auto (replacing float) pushes it to THAT full-width row's real right edge — the
+   same trick #clerkBtn/.h1-right already used on mobile, now the only mechanism, at every width.
+   Title span colored to match the UNOFFICIAL badge (var(--mid), amber/gold) instead of green —
+   cohesive with the gold LoL wordmark; the badge and .algo-link still win on specificity (a class
+   selector beats these 2 plain-element selectors) so neither turns amber by accident. */
+h1 { font-size:22px; margin-bottom:4px; display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:1 1 auto; min-width:0; }
+h1 span { color:var(--mid); }
+.site-header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.lol-logo { height:24px; width:auto; display:block; flex-shrink:0; filter:drop-shadow(0 0 6px rgba(199,155,59,.3)); }
+.unofficial-badge { font-size:10px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+  background:#3a2d10; color:var(--mid); border:1px solid var(--mid); border-radius:99px; padding:2px 8px; }
+/* Right-aligned cluster in the header: the /scoring.html link immediately left of the profile
+   button (#clerkBtn, populated by Clerk once it loads — mounted user button or a "Sign in"
+   button). margin-left:auto (in the now-always-flex h1 above) pushes it to the row's end at
+   every width — no separate mobile override needed anymore, see the ≤640px block. */
+.h1-right { display:inline-flex; align-items:center; gap:12px; margin-left:auto; }
+#clerkBtn { font-size:14px; }
+/* Link to /scoring.html (the "how we score" static explainer page) — also repeated in the
+   footer. Deliberately unobtrusive (dim, no underline) until hovered; small enough not to compete
+   with the h1 title. `h1 span { color:var(--ok) }` above would otherwise force .algo-short/-full
+   green at all times (it targets any span inside h1) — the extra `span` selectors here win on
+   specificity and keep the link dim except on hover. .algo-short (a shorter "Scoring" label) only
+   shows on mobile, see the ≤640px block. */
+.algo-link, .algo-link span { color:var(--dim); text-decoration:none; font-size:13px; }
+.algo-link:hover, .algo-link:hover span { color:var(--ok); }
+.algo-short { display:none; }
+.sub { color:var(--dim); font-size:13px; margin-bottom:20px; }
+form { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+input, select { background:var(--card); border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:10px 12px; font-size:15px; }
+.combo { position:relative; flex:1; min-width:220px; display:flex; }
+/* v4.36/v4.37: room for TWO overlay icon buttons on the input's right edge now (★ bookmark +
+   🔗 profile-link copy — see #bmStar/#copyProfileLink below), not just the one — widened from 40px
+   so the input's own text never sits under either of them. */
+input#riotId { flex:1; min-width:200px; width:100%; padding-right:64px; }
+.keywrap { position:relative; display:inline-flex; }
+/* type="text" (not "password") so Chrome's password manager doesn't treat this as a login field
+   and offer to save/generate a password for it — Chrome ignores autocomplete/data-*-ignore hints
+   on password-typed inputs entirely. Masked visually instead via -webkit-text-security, which
+   covers Chromium + Safari; Firefox has no equivalent and will show the key in plain text there
+   (acceptable tradeoff for an API key field, not a real password). */
+input#apiKey { width:270px; padding-right:46px; transition:border-color .3s ease; -webkit-text-security:disc; }
+input#apiKey.key-updated { border-color:var(--ok); }
+/* Inline validity indicator (see the debounced /api/keycheck call in main.js) — sits between the
+   input's text and the clear (✕) button, so padding-right on the input above was widened to make
+   room for both. Empty/neutral by default (no key, or one that doesn't look like RGAPI-...). */
+#keyValid { position:absolute; right:26px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; font-weight:700; cursor:default; }
+#keyValid.ok { color:var(--ok); }
+#keyValid.bad { color:var(--bad); }
+#keyValid.checking { color:var(--dim); font-weight:400; }
+#clearKey { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:0; color:var(--dim); font-size:13px; padding:2px 4px; line-height:1; cursor:pointer; }
+#clearKey:hover { color:var(--txt); }
+button { background:var(--ok); color:#06251b; border:0; border-radius:8px; padding:10px 20px; font-weight:700; font-size:15px; cursor:pointer; }
+button:disabled { opacity:.5; cursor:wait; }
+.keyrow { display:flex; gap:14px; align-items:flex-start; width:100%; flex-wrap:wrap; }
+.note { font-size:12px; color:var(--dim); flex:1; min-width:200px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:12px; overflow:hidden; }
+.head { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; flex-wrap:wrap; }
+.badge { font-weight:800; font-size:12px; padding:4px 10px; border-radius:99px; white-space:nowrap; }
+.b-ok { background:#123527; color:var(--ok);} .b-mid{ background:#3a2d10; color:var(--mid);} .b-bad{ background:#3a1616; color:var(--bad);} .b-live{ background:#3a1616; color:#e05d5d; }
+.live { background:#e05d5d; color:#2a0d0d; }
+.res-V { color:var(--ok); font-weight:700; } .res-D { color:var(--bad); font-weight:700; }
+.details { display:none; border-top:1px solid var(--line); padding:12px 16px; overflow-x:auto; }
+.card.open .details { display:block; }
+table { width:100%; border-collapse:collapse; font-size:13px; margin:8px 0 16px; }
+th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+th { color:var(--dim); font-weight:600; }
+.t-blue td:first-child { border-left:3px solid var(--blue);} .t-red td:first-child { border-left:3px solid var(--red);}
+.even-blue { background:rgba(74,144,217,.06); }
+.even-red { background:rgba(217,122,74,.06); }
+.fav-blue { background:rgba(74,144,217,.14); }
+.fav-red { background:rgba(217,122,74,.14); }
+.you { background:rgba(242,195,76,.10); }
+tr.you td:first-child { border-left:3px solid #f2c34c !important; }
+td.you:first-child { border-left:3px solid #f2c34c !important; }
+td:not(.you) + td.you { border-left:3px solid #f2c34c !important; }
+td.you + td.you { border-left:none !important; }
+.gold { color:#f2c34c; font-weight:800; }
+.tm-blue { color:var(--blue); font-weight:800; }
+.tm-red { color:var(--red); font-weight:800; }
+.badge-mvp, .badge-ace { border:1px solid currentColor; border-radius:99px; padding:0 6px; font-size:10px; font-weight:800; }
+.badge-mvp { color:#f2c34c; }
+.badge-ace { color:#c77dff; }
+.champ-c { width:1%; white-space:nowrap; }
+.champ { font-weight:700; }
+/* v4.18: champion meta hover — dashed underline + help cursor signals "hover for more" without
+   adding any visible chrome to an already-tight lane row. Only applied when lib/champstats.mjs
+   actually has data for this champ (see champMetaTitle in src/main.js) — a champ missing from the
+   snapshot renders as plain .champ text, no dashed underline implying a tooltip that isn't there. */
+.champ-meta { border-bottom:1px dashed var(--dim); cursor:help; }
+/* v4.27: champion square icon — matchup champ-c columns only (details tables / live card keep
+   the plain .champ text span above, out of this redesign's scope). Team-colored border instead
+   of the dashed-underline .champ-meta hint; champ-meta still adds cursor:help (the champion name
+   + WR/pick/ban line both live in the <img>'s title now, so a discovery cue is still worth
+   keeping). A 404'd icon is swapped back to a plain .champ span by the delegated error listener
+   in src/main.js — never a broken-image box. */
+.champ-icon { width:36px; height:36px; border-radius:9px; display:block; object-fit:cover;
+  border:2px solid var(--line); box-shadow:0 1px 4px rgba(0,0,0,.4); }
+.champ-icon.team-blue { border-color:var(--blue); }
+.champ-icon.team-red { border-color:var(--red); }
+.champ-icon.champ-meta { cursor:help; }
+/* Role icon (CommunityDragon's clash position-selector set) above each lane's Favored verdict —
+   forced to a dim white silhouette via filter so it reads as the same metadata weight as
+   .place/.rank-tag regardless of the source icon's own native color. */
+.role-icon { width:16px; height:16px; display:block; margin:0 auto 3px; filter:brightness(0) invert(1); opacity:.55; }
+.pcell { display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.pname { white-space:nowrap; }
+.plink { color:inherit; text-decoration:none; cursor:pointer; }
+.plink:hover { text-decoration:underline; }
+.chip { font-size:10px; background:#20242d; border:1px solid var(--line); border-radius:99px; padding:1px 7px; color:var(--dim); white-space:nowrap; cursor:default; }
+.chip.cs-elite { color:#2dd4bf; border-color:#2dd4bf; }
+.chip.cs-good { color:var(--ok); border-color:var(--ok); }
+.chip.cs-ok { color:var(--mid); border-color:var(--mid); }
+.chip.cs-low { color:var(--bad); border-color:var(--bad); }
+.chip.wr-hi { color:var(--ok); border-color:var(--ok); }
+.chip.wr-lo { color:var(--bad); border-color:var(--bad); }
+.chip.flag-otp-denied { color:var(--mid); border-color:var(--mid); }
+.chip.flag-tilt { color:var(--mid); border-color:var(--mid); }
+.chip.flag-smurf { color:var(--bad); border-color:var(--bad); font-weight:800; }
+.chip.flag-afk { color:var(--bad); border-color:var(--bad); }
+.chip.flag-countered { color:var(--bad); border-color:var(--bad); }
+/* Every chip is semantically colored — no plain grey/default chips (the .chip base color:var
+   (--dim) above is only a fallback for the one intentionally-neutral case, the "average" cs/min
+   tier). Blue = neutral fact worth knowing (proven duo, one-trick pick); amber = risk that makes
+   the GA number less trustworthy, same family as tilt; streaks are green/red for win/loss. */
+.chip.flag-duo { color:var(--blue); border-color:var(--blue); }
+.chip.flag-otp { color:var(--blue); border-color:var(--blue); }
+.chip.flag-mastery { color:var(--blue); border-color:var(--blue); }
+.chip.flag-autofill { color:var(--mid); border-color:var(--mid); }
+.chip.flag-rusty { color:var(--mid); border-color:var(--mid); }
+.chip.streak-win { color:var(--ok); border-color:var(--ok); }
+.chip.streak-loss { color:var(--bad); border-color:var(--bad); }
+.matchup td { white-space:normal; }
+#bmStar { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:0; color:#f2c34c; font-size:17px; padding:2px 4px; line-height:1; }
+#bmStar.starred { background:none; }
+/* v4.37: sits in its OWN slot to the star's left (not stacked on top of it — that was the bug
+   report) inside the same absolute-overlay cluster on the input's right edge, same technique/
+   sizing family as #bmStar here and #clearKey in .keywrap below. Neutral/dim like #clearKey rather
+   than the star's own gold — this isn't a toggled "favorited" state, just a utility action. */
+#copyProfileLink { position:absolute; right:30px; top:50%; transform:translateY(-50%); background:none; border:0; color:var(--dim); font-size:14px; padding:2px 4px; line-height:1; cursor:pointer; }
+#copyProfileLink:hover { color:var(--txt); }
+#bmDrop { display:none; position:absolute; top:100%; left:0; right:0; background:var(--card); border:1px solid var(--line); border-radius:0 0 10px 10px; z-index:20; max-height:240px; overflow-y:auto; }
+#bmDrop.open { display:block; }
+.bmItem { padding:8px 12px; cursor:pointer; }
+.bmItem:hover { background:#20242d; }
+.bmItem .dim { font-size:12px; }
+.ga-hi { color:var(--ok); font-weight:700; } .ga-lo { color:var(--bad); font-weight:700; }
+#status { color:var(--dim); margin:20px 0; }
+/* v4.11: "LOSING QUEUE?" banner — a slim strip above #list, only present (display:block, toggled
+   in JS) when the searched profile has a 3+ streak of consecutive NOT FAIR/against analyzed games.
+   Reuses the existing .badge/.b-bad pill styling so it reads as the same visual language as the
+   per-row verdict badges rather than a new component. */
+#losingBadge { margin:0 0 14px; }
+/* Desktop: strictly one line — result/champ/badge/buttons must always stay visible and never
+   wrap to a second line; the one-liner (.one-h below) is the only element allowed to shrink,
+   truncating with an ellipsis instead of pushing the row's height out or wrapping the buttons.
+   Mobile re-enables wrap (see the ≤640px block) since there's no room to keep it all on one line
+   there and the stacked/wrapped layout is the intended compact mobile look. */
+.row { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; flex-wrap:nowrap; }
+/* Fixed-width leading columns so every row's result/champ/KDA/badge/date line up vertically and
+   none of them ever wraps internally (the old plain `<span>champ kda</span>` would word-wrap mid
+   -content once the row got tight) — only .one-h is allowed to flex/shrink/truncate. Widths sized
+   to comfortably fit their content; .col-champ additionally ellipsizes since champion names vary
+   a lot in length (internal ids have no spaces, so nowrap is always safe, just sometimes long —
+   e.g. "Heimerdinger"). .col-badge only ever holds "FAIR"/"NOT FAIR" now — the directional
+   qualifier that used to be spelled out in the badge text ("NOT FAIR · THEIR FAVOR"/"· YOUR
+   FAVOR") moved to color-only (b-bad red / b-mid amber, see verdictCls in main.js) plus the
+   tooltip, so the column shrank back down from the 150px it needed for that longer text. Measured
+   "NOT FAIR" (the longer of the two) at 66.5px with the .col-badge .badge font/padding below —
+   90px keeps a comfortable ~23px margin. Empty for unanalyzed rows. */
+.col-res, .col-champ, .col-kda, .col-badge, .col-date { flex-shrink:0; white-space:nowrap; overflow:hidden; }
+.col-res { width:64px; }
+.col-champ { width:84px; text-overflow:ellipsis; }
+.col-kda { width:70px; }
+.col-badge { width:90px; }
+.col-badge .badge { font-size:10.5px; padding:3px 8px; }
+/* 96px was sized for the old absolute date ("38m · 29/07 18:06"); the short relative date
+   ("38m · 2d ago") is comfortably shorter, so this shrinks with real slack to spare — 78px still
+   covers the common cases ("Xm ago"/"Xh ago"/"Xd ago") with ellipsis as a safety net for rarer
+   long combinations (e.g. a live-snapshot row's "12m (in progress)" duration). */
+.col-date { width:78px; text-overflow:ellipsis; }
+.gcard { background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+/* Clicking anywhere on this summary line now expands/collapses the row (see the delegated
+   .gcard > .row listener in main.js), not just the View/Analyze button — cursor:pointer plus a
+   subtle hover tint is the whole affordance; deliberately not styled to look like a button. */
+.gcard .row { background:none; border:0; border-radius:0; margin:0; cursor:pointer; }
+.gcard .row:hover { background:var(--line); }
+.gcard .details { display:none; border-top:1px solid var(--line); padding:12px 16px; overflow-x:auto; }
+.gcard.open .details { display:block; }
+.matchup { margin-bottom:16px; }
+/* top, not middle: a chip line on one side but not the other would otherwise shift that row's
+   line 1 off the other side's, since middle-alignment centers each cell against the row's
+   tallest content. Top-aligning keeps line 1 on a shared baseline regardless. */
+.matchup td { vertical-align:top; }
+.matchup .mid-v { text-align:center; white-space:nowrap; min-width:90px; padding-top:9px; }
+/* v4.27: win probability under the TEAM row's verdict badge — a horizontal bar (was a "BLUE 19% ·
+   RED 81%" text line): one slim rounded track, a blue segment sized to wp.blue% and a red one to
+   wp.red% (always sum to 100), each label centered in its own segment in near-white text with a
+   dark text-shadow for contrast on either color. .wp-bar itself clips to the pill shape
+   (overflow:hidden) — a segment under WP_NARROW_PCT (main.js) can't fit its own label without
+   getting clipped, so main.js drops that inline label and adds a .wp-label-out span instead,
+   positioned OUTSIDE wp-bar-wrap (which does NOT clip) just past the bar's edge on that side, in
+   the team's own color against the page background. */
+.wp-bar-wrap { position:relative; margin-top:6px; height:15px; }
+.wp-bar { display:flex; height:100%; border-radius:99px; overflow:hidden; background:var(--line); }
+.wp-seg { display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
+.wp-seg-blue { background:var(--blue); }
+.wp-seg-red { background:var(--red); box-shadow:-1px 0 0 rgba(0,0,0,.3) inset; }
+.wp-seg-label { font-size:10px; font-weight:800; color:#fff; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+.wp-label-out { position:absolute; top:50%; transform:translateY(-50%); font-size:10px; font-weight:800; white-space:nowrap; }
+.wp-label-out-blue { right:100%; margin-right:4px; color:var(--blue); }
+.wp-label-out-red { left:100%; margin-left:4px; color:var(--red); }
+/* Compact "55%–45%" form used next to a row's badge/one-liner once that row has real entry data
+   (post-analyze) — dim by default like the rest of the row's secondary text. */
+.wp-compact { color:var(--dim); font-size:11px; white-space:nowrap; }
+/* v4.20: bot-lane duo synergy chip ("duo +2.4%") on the BOTTOM/UTILITY rows — green when the
+   pairing clears +1% over the champs' own solo winrates, red at -1% or worse, dim in the narrow
+   band between (real, just not a strong enough signal to call out). Same green/red vocabulary as
+   .chip.wr-hi/.wr-lo elsewhere in this file. The TEAM footer's side-by-side comparison line stays
+   plain dim — it's a factual readout, not itself a favored/unfavored call. */
+.chip.synergy-pos { color:var(--ok); border-color:var(--ok); }
+.chip.synergy-neg { color:var(--bad); border-color:var(--bad); }
+.chip.synergy-dim { color:var(--dim); }
+/* v4.33: "Recommended build" reveal (lib/builds.mjs + lib/proExamples.mjs) — a small click-to-
+   expand chip (blue, like the other informational flag-otp/flag-mastery chips) under each player
+   row; .build-b is its hidden panel, toggled by the delegated .build-h click listener. */
+.chip.build-h { color:var(--blue); border-color:var(--blue); cursor:pointer; }
+.build-b { font-size:11px; color:var(--dim); line-height:1.5; margin-top:3px; max-width:260px; }
+.build-b b { color:var(--txt); }
+/* v4.22: DRAFT verdict — champ-select quality, its own bordered pill (was two stacked plain-text
+   lines: a "bot synergy X vs Y" readout, then a separate colored "DRAFT · EVEN" line — merged into
+   one block so it reads as a single distinct signal under the fairness badge/win-prob line rather
+   than two loose rows). Border color follows the verdict (GOOD/BAD/EVEN); the verdict text inside
+   is colored the same way, the trailing " — components" tail stays dim regardless. */
+.draft-pill { display:inline-flex; align-items:center; margin-top:5px; padding:3px 6px; border:1px solid var(--line); border-radius:6px; font-size:11px; white-space:nowrap; }
+.draft-pill.draft-good { border-color:var(--ok); }
+.draft-pill.draft-bad { border-color:var(--bad); }
+.draft-verdict { font-weight:700; }
+.draft-pill.draft-good .draft-verdict { color:var(--ok); }
+.draft-pill.draft-bad .draft-verdict { color:var(--bad); }
+.draft-pill.draft-even .draft-verdict { color:var(--dim); font-weight:400; }
+.draft-comp { color:var(--dim); }
+.matchup .rgt { text-align:right; }
+.matchup .teamrow { background:rgba(255,255,255,.03); }
+.matchup .teamrow td { border-top:2px solid var(--line); border-bottom:none; padding:10px 8px; }
+/* Autofill count in the TEAM footer (next to the duo suffix) — amber, same risk-family color as
+   the autofill chip, since it's the same signal just surfaced at the team level. */
+.af-count { color:var(--mid); font-weight:400; }
+/* Each matchup player cell is two stacked lines: line one (see .p-main below) on top, every chip
+   (MVP/ACE leading, then OTP/duo/flags/streak/cs/severity) on line two. v4.26: line one's element
+   order now DOES differ per side — red mirrors blue around the table's center Favored column
+   (rank/place/GA/kda toward center, name at the outer edge) instead of the old "same order both
+   sides, just left-aligned" layout; see cellName in src/main.js and the .p-main/.p-cell-edge rules
+   below for the mechanism. The TEAM footer row's right cell separately keeps its own
+   .rgt right-alignment, as a short bookend — unrelated to this per-player mirroring. */
+.place { color:var(--dim); font-size:11px; font-weight:700; }
+/* v4.17: compact rank tag ("E4"/"P2"/"M") next to GA in the matchup rows — same dim/small
+   treatment as .place so it reads as metadata, not a headline number. Hidden on mobile (see the
+   ≤640px block) rather than fighting for room in the already-tight stacked-card row. v4.19:
+   white-space:nowrap keeps "P2 · 49%" atomic — it must never split across two lines internally;
+   at typical name lengths the wider (1200px) page gives the whole cell room to stay one line, but
+   even if a long name wraps the CELL as a whole, the tag itself stays intact rather than breaking
+   mid-string. */
+.rank-tag { font-size:11px; font-weight:700; border:1px solid var(--line); border-radius:4px; padding:0 3px; white-space:nowrap; }
+/* Performance score chip ("7.8/10") — purely informational, post-game, independent of the
+   fairness verdict, so it's deliberately NOT styled like GA (bold plain text) or .rank-tag
+   (square-cornered, --line border): a distinct teal accent (--perf) plus a pill shape (like the
+   MVP/ACE badges it sits next to in the chip row) keeps it from ever being read as a rank or a GA
+   figure at a glance. Lives in the per-player CHIP line (see cellName in main.js), not the
+   place/name/kda/GA/rank line above it, for the same "never confused with GA or rank" reason. */
+.perf-tag { font-size:10px; font-weight:800; color:var(--perf); border:1px solid currentColor; border-radius:99px; padding:0 6px; white-space:nowrap; }
+/* v-perf-detail: when a real perfDetail is available (see perfHTML in main.js), the tag becomes a
+   click-to-reveal (same mechanism as .build-h/.build-b) showing the actual per-player numbers
+   behind the score instead of just a category-name tooltip. Legacy/live entries with no perfDetail
+   keep the plain non-interactive .perf-tag above (no cursor change, tooltip only). */
+.perf-tag.perf-h { cursor:pointer; }
+.perf-b { font-size:11px; color:var(--dim); line-height:1.5; margin-top:3px; max-width:320px; }
+/* v4.25/v4.26: .p-main is a flex row of exactly two children — the bundled "everything else"
+   (.p-main-info) and whichever single element sits at the cell's own far edge (.p-cell-edge),
+   pushed there via margin-left:auto so it lands flush right with whatever slack that row has
+   (shorter rows in the same column get more push, since the table's auto column width matches
+   the WIDEST row) instead of raggedly trailing right after whatever text happens to precede it.
+   v4.26: BLUE puts the rank tag at that edge (nearest the Favored column); RED instead mirrors
+   the whole row — rank/place/GA/kda cluster toward the Favored column, player NAME pushed to the
+   table's outer edge (see cellName in src/main.js) — same mechanism, different element pushed,
+   so both columns still read as a tidy edge-aligned line while red reads center-out symmetric
+   with blue. min-width:0 on the info bundle lets it shrink instead of forcing the row to
+   overflow; .pname's own max-width+ellipsis (below) still does the actual truncation. */
+.p-main { display:flex; align-items:baseline; gap:6px; }
+.p-main-info { min-width:0; }
+.p-main .p-cell-edge { margin-left:auto; flex-shrink:0; }
+.matchup .pname { display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
+.p-chips { display:flex; gap:4px; flex-wrap:wrap; margin-top:3px; }
+.matchup tr:not(.teamrow) .rgt { text-align:left; }
+/* v4.26: red's chip line (MVP/ACE badge leading, then flags/duo/streak/cs) right-aligns to sit
+   under the player NAME now that .p-cell-edge pushes the name to red's outer edge instead of
+   chips trailing under whatever used to be on the left — keeps the badge visually adjacent to the
+   name, mirroring how blue's badge already sits directly under blue's (left-aligned) name. */
+.matchup tr:not(.teamrow) .rgt .p-chips { justify-content:flex-end; }
+/* BLUE/RED team tables share fixed column widths (via an identical <colgroup>) so they line
+   up vertically. The Player cell is the one variable-content column — long "Name#TAG" plus a
+   chip group — so it gets the max-width:0 + overflow trick to ellipsis instead of pushing the
+   fixed layout out of alignment; other columns wrap instead of overflowing their column. */
+.details-table { table-layout:fixed; }
+.details-table td, .details-table th { white-space:normal; word-break:break-word; }
+.details-table td:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:0; }
+.details-table .pcell { flex-wrap:nowrap; }
+/* The flexible element in a one-line row: grows/shrinks to fill whatever space the fixed-size
+   siblings (result, champ/KDA, badge, date, buttons) don't need, and ellipsizes instead of
+   wrapping or overflowing. No fixed max-width — that would either clip early on wide screens or
+   still overflow on narrow ones; flex:1 1 auto + min-width:0 lets it size to the real remainder. */
+.one-h { color:var(--dim); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto; min-width:0; }
+.sec-h { cursor:pointer; padding:8px 0; border-top:1px solid var(--line); color:var(--dim); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.sec-h.first { border-top:none; }
+.lv-even { color:var(--ok); } .lv-blue { color:var(--blue); font-weight:700; } .lv-red { color:var(--red); font-weight:700; }
+/* Favored/heavily-favored severity is explained only by this value's own tooltip (no more
+   per-player severity chip) — the dotted underline plus help cursor is the discovery hint. */
+.lv-even, .lv-blue, .lv-red { cursor:help; border-bottom:1px dotted currentColor; }
+.row .dim, .dim { color:var(--dim); font-size:13px; }
+/* The date/duration span is a fixed-size sibling of the flexible .one-h above — it should never
+   wrap or shrink away on desktop's single-line row (the one-liner is what gives up space). */
+.row .dim { white-space:nowrap; flex-shrink:0; }
+.mini { margin-left:auto; padding:6px 14px; font-size:13px; flex-shrink:0; }
+/* A wasLive row (came back as a live-only snapshot, no final analysis yet — see matches.mjs's
+   wasLive flag) gets a subtle amber outline on its Analyze button: "your live-reviewed game is
+   ready for its final analysis". outline (not border) so it doesn't shift the button's box size. */
+.mini.wasLive-ready { outline: 2px solid var(--mid); outline-offset: 1px; }
+/* Re-analyze icon button sits right after .mini's View button — it shouldn't also claim the
+   margin-left:auto that pushes .mini to the row's right edge (that job stays with View). */
+.icon-btn { min-width:0; padding:6px 10px; margin-left:6px; font-size:14px; flex-shrink:0; }
+/* Re-analyze/Share are now always rendered (not just for g.cached rows) so analyze()'s first-time
+   success path has an element to reveal without a full renderRows re-render — see main.js. Plain
+   [hidden] isn't reliable here: the mobile media query below sets .mini/.icon-btn's own `display`
+   unconditionally, and an author rule of equal specificity always beats the UA [hidden] rule
+   regardless of source order, so it would silently un-hide these on a phone. !important guarantees
+   this wins over both the desktop and mobile display rules until analyze() removes the class. */
+.action-hidden { display:none !important; }
+/* v4.37: share-btn's icon is now an inline SVG (shareIconSvg() in main.js), not an emoji — sized
+   to sit flush with the button's own text baseline, inheriting currentColor so hover/disabled
+   states already defined for buttons apply to it for free. */
+.share-btn svg { vertical-align:-2px; margin-right: 2px; }
+/* v4.36: transient toast (Copy link / Copy image confirmations) — fixed bottom-center, fades in
+   on .show, pointer-events:none throughout so it never blocks a click underneath it. */
+.toast { position:fixed; left:50%; bottom:28px; transform:translate(-50%, 10px); background:var(--card); border:1px solid var(--line); color:var(--txt); padding:10px 18px; border-radius:8px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:80; max-width:min(90vw, 480px); overflow-wrap:anywhere; text-align:center; }
+.toast.show { opacity:1; transform:translate(-50%, 0); }
+/* v4.38: Share modal (#shareModal in main.js), user-approved mockup — a proper share sheet: a row
+   of platform circles, a copyable link-preview row, and a de-emphasized "Download image" ghost
+   link at the bottom (no big image preview inside the modal anymore — that's what made the v4.37
+   cut feel image-first instead of share-first). Backdrop click or the ✕ dismisses it. */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:90; padding:20px; }
+.modal-backdrop.open { display:flex; }
+.modal-card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; width:min(420px, 92vw); max-width:100%; max-height:92vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.modal-title { font-weight:800; color:var(--txt); font-size:15px; }
+.modal-x { background:none; border:none; color:var(--dim); font-size:18px; line-height:1; cursor:pointer; padding:4px 6px; border-radius:6px; }
+.modal-x:hover { background:var(--line); color:var(--txt); }
+/* Horizontally scrollable so a future 6th platform (or a narrow phone screen) never wraps/clips
+   awkwardly — scrollbar hidden since the row is short enough to not need a visible one normally. */
+.share-platforms { display:flex; gap:18px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; }
+.share-platforms::-webkit-scrollbar { display:none; }
+.platform-item { display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:0; cursor:pointer; padding:0; flex:0 0 auto; }
+.platform-circle { width:48px; height:48px; border-radius:50%; background:var(--pcolor); display:flex; align-items:center; justify-content:center; }
+.platform-item:hover .platform-circle { filter:brightness(1.12); }
+.platform-label { font-size:11px; color:var(--dim); }
+.link-preview { display:flex; align-items:center; gap:8px; background:#20242d; border:1px solid var(--line); border-radius:10px; padding:9px 10px; margin-top:16px; }
+.link-preview .link-icon { flex-shrink:0; color:var(--dim); display:flex; }
+.link-preview .link-text { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--txt); font-size:13px; }
+.link-copy-btn { flex-shrink:0; background:var(--ok); color:#06251b; border:0; border-radius:6px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+.link-copy-btn:hover { filter:brightness(1.08); }
+.modal-footer-actions { display:flex; justify-content:flex-end; margin-top:10px; }
+.ghost-download { background:none; border:0; color:var(--dim); font-size:12px; cursor:pointer; padding:4px 2px; }
+.ghost-download:hover { color:var(--txt); }
+.note a { color:var(--ok); }
+#keyHelp { margin-top:8px; line-height:1.7; }
+h4 { margin:10px 0 2px; }
+.spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.3); border-top-color:currentColor; border-radius:50%; animation:r .8s linear infinite; vertical-align:-2px; }
+.foot { margin-top:40px; padding:16px 0; border-top:1px solid var(--line); font-size:12px; text-align:center; }
+.foot a { color:var(--ok); text-decoration:none; font-weight:700; }
+.foot a:hover { text-decoration:underline; }
+/* Live card header: one compact row (badge, champ, elapsed time, lane recommendation, fairness
+   note) instead of the old two-row banner-plus-line layout — a player mid-loading-screen wants
+   this at a glance. .live-head groups everything except the trailing .one-h fairness note so
+   mobile can force exactly that one wrap point (see the ≤640px block) instead of leaving it to
+   flex-wrap's item-by-item flow, which could otherwise split the group unpredictably. */
+.live-head { display:inline-flex; align-items:center; gap:8px; flex-shrink:0; white-space:nowrap; }
+.reco-inline { font-weight:800; color:var(--ok); white-space:nowrap; }
+.reco-inline.dim { font-weight:600; color:var(--mid); }
+@keyframes r { to { transform:rotate(360deg);} }
+
+/* ==== Mobile (phones, ≤640px) — CSS-only, no markup changes ==== */
+@media (max-width: 640px) {
+  body { padding:12px; }
+
+  /* header: v4.28 made h1's flex layout (and .h1-right's margin-left:auto) the baseline at every
+     width, so only the font-size shrink is mobile-specific now — .h1-right still wraps onto its
+     own line when there's no room left, same as before. The scoring link itself shrinks to
+     "Scoring" here — "How we score" is too wide next to the title + profile button. */
+  h1 { font-size:19px; }
+  .algo-full { display:none; }
+  .algo-short { display:inline; }
+  .lol-logo { height:19px; }
+
+  /* copy reduction: mobile keeps only the essential fragment of each — see the .sub-short/
+     .sub-more and .note-more split in src/main.js for what's hidden here (the "No key?" note
+     also moved inside the collapsed #keyHelp block in the markup itself, for both screen sizes). */
+  .sub-more, .note-more { display:none; }
+
+  /* form: exactly two rows. Row 1 is the profile combo + games count + region, all on one
+     line — the combo shrinks to a lower min-width and flex:1 (inherited from the base .combo
+     rule) grows it to fill whatever the two selects don't use, which leaves zero space left on
+     the line and reliably pushes row 2 (the buttons) onto its own line with no extra markup.
+     Row 2 is both buttons at ~50/50. The key row still stacks; buttons shrink to match. */
+  .combo { min-width:140px; }
+  #go, #liveBtn { flex:1 1 calc(50% - 4px); padding:8px 12px; font-size:14px; }
+  .keyrow { flex-direction:column; align-items:stretch; }
+  .keywrap, input#apiKey, .note { width:100%; }
+
+  /* matchup table -> stacked lane "cards". The DOM order per row is already
+     blue-champ, blue-player, verdict, red-champ, red-player, red-champ (or the equivalent —
+     see matchupHTML), so switching every table/tbody/tr/td to display:block just stacks that
+     same order vertically; no markup changes needed. */
+  .matchup, .matchup tbody, .matchup tr, .matchup td { display:block; width:100%; }
+  .matchup tr:first-child { display:none; } /* column header row — meaningless once stacked */
+  .matchup td { border-bottom:none; padding:2px 4px; }
+  .matchup tr:not(.teamrow) { border-top:1px solid var(--line); padding:8px 0; }
+  .matchup .champ-c { display:inline-block; width:auto; color:var(--dim); }
+  .matchup .rank-tag { display:none; } /* stacked cards are already tight — rank is a nice-to-have here */
+  /* v4.27: champion icon shrinks (36px is desktop-sized against a wide row; 28px keeps it
+     proportionate to the stacked card's tighter line-height) rather than disappearing — unlike
+     the rank tag, it's the ONLY identifier for the champion in this cell now that the text name
+     moved into its title tooltip, so it can't just hide the way rank-tag/role-icon do here. Role
+     icon DOES hide — same "stacked cards are already tight" call as rank-tag above, and the lane
+     order itself (TOP/JUNGLE/MID/ADC/SUPPORT) is still unambiguous from the stacking order alone. */
+  .matchup .champ-icon { width:28px; height:28px; border-radius:7px; }
+  .matchup .role-icon { display:none; }
+  .matchup .mid-v { text-align:center; margin:6px 0; min-width:0; } /* also the TEAM row's badge cell */
+  .matchup .teamrow { border-top:2px solid var(--line); }
+  .matchup .teamrow td { border-top:none; padding:4px; }
+
+  /* details tables: table-layout:fixed (and its %-based colgroup) only makes sense once BLUE
+     and RED have room to sit side by side and need to line up — on a phone they're already
+     stacked full-width sections, so let columns size to content instead, and drop Dmg/CS
+     (columns 6 and 7: Player,Rank,Pos,Champ,KDA,Dmg,CS,GA,Form) to fit what's left. Horizontal
+     scroll (already set unconditionally on .details) is the fallback for whatever's still tight. */
+  .details-table { table-layout:auto; }
+  .details-table col { width:auto !important; }
+  .details-table td:first-child { max-width:none; overflow:visible; text-overflow:clip; white-space:normal; }
+  .details-table th:nth-child(6), .details-table td:nth-child(6),
+  .details-table th:nth-child(7), .details-table td:nth-child(7) { display:none; }
+
+  /* touch targets: ~44px effective height on tappable controls, except .mini (the row's
+     Analyze/View button, also reused by history-nav/sign-in buttons) which reads as too bulky
+     at that size on a game card — a smaller but still tappable ~38px instead. */
+  .mini { min-height:38px; padding:6px 12px; display:inline-flex; align-items:center; box-sizing:border-box; }
+  /* keep the re-analyze icon compact on phones too — same touch-friendly height as .mini, but
+     narrower padding since it's a single glyph, not a label. */
+  .icon-btn { min-height:38px; padding:6px 8px; margin-left:4px; }
+  .sec-h { min-height:44px; display:flex; align-items:center; box-sizing:border-box; }
+  .head { min-height:44px; box-sizing:border-box; }
+
+  /* game card header row: tighter padding so cards read as compact on a phone, and re-enable
+     wrapping (desktop forces strict one-line — see the base .row rule — but there's no room for
+     that here, so badge/date/one-liner/buttons wrap onto their own lines like before). .one-h
+     and .row .dim revert to their pre-single-line-fix behavior (bounded max-width, default
+     shrink/wrap) rather than the desktop flex-fill/never-shrink rules. */
+  .row { padding:8px 12px; flex-wrap:wrap; }
+  .one-h { max-width:46ch; flex:0 1 auto; }
+  .row .dim { white-space:normal; flex-shrink:1; }
+  /* The fixed-width desktop columns (see the base .col-* rule) would either cramp or pointlessly
+     truncate content once the row wraps onto multiple lines here — auto-size to content instead,
+     same as everything else in the mobile layout. white-space:nowrap is still safe to keep (these
+     are all single unspaced tokens) but overflow/ellipsis is no longer needed since nothing is
+     being force-fit into a fixed box. */
+  .col-res, .col-champ, .col-kda, .col-badge, .col-date { width:auto; overflow:visible; }
+
+  /* Live card header: force exactly the intended 2-line split (badge+champ+time+recommendation
+     on line 1, the dim fairness note on line 2) instead of leaving flex-wrap to break wherever it
+     runs out of room mid-group. flex:1 1 100% makes .live-head claim the whole row width for
+     itself, which pushes .one-h (the only other flex child) onto its own line every time. */
+  .live-head { flex: 1 1 100%; }
+}
